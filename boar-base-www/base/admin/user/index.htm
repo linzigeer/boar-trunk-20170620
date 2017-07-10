@@ -1,0 +1,308 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.base.userIndex.ui
+		, userPl = pg.children('.userPl')
+		, rolePl = pg.children('.rolePl')
+		, userGd = userPl.find('.grid')
+		, roleGd = rolePl.find('.grid')
+		, ownsCbx = rolePl.seek('ownsOnly')
+		, userFind = userPl.seek('find')
+		, userKey = userPl.seek('key')
+		, userAdd = userPl.seek('add')
+		, roleFind = rolePl.seek('find')
+		, roleKey = rolePl.seek('key')
+		, rca = []; //role code arrary
+
+	//查询与当前用户在同一部门下的所有用户 
+	userGd.mac('grid', {
+		cols : [{
+				field: 'nick', title : '昵称', width: 80, sort: true,
+				render: function(r) {
+					return $('<span class="a"></span>').click(function(){
+						App.open({
+							ctx:'base',
+							action: 'userEdit',
+							modal: true,
+							params: r
+						}, function(){
+							gd.load();
+						});
+					}).append(r.nick);
+				}
+			}, {
+				field: 'name', title : '姓名', width: 100, sort: true
+			},{
+				field: 'id', title : '操作', width: 160,
+				render: function(r, tr, gd){
+					var a = $('<div></div>');
+					if(App.logon.power('sys.user.resetPwd')){
+						$('<span class="a"></span>').click(function(){
+							App.open({
+								ctx:'base',
+								action: 'setpwd',
+								params: r,
+								modal: true
+							});
+						}).append('修改密码').appendTo(a);
+						a.append('&nbsp;&nbsp;')
+					}
+					if(App.logon.power('sys.user.resetPwd')){
+						$('<span class="a"></span>').click(function(){
+							if (confirm('确定要删除这个用户吗？')) {
+								$.post(App.ctx + '/sys/user/delete.do', {
+									id: r.id
+								}, function(rs){
+									gd.loader.params.pageNo = 1;
+									gd.load();
+								});
+							}
+						}).append('删除').appendTo(a);
+					a.append('&nbsp;&nbsp;')
+					}
+					if(App.logon.power('sys.user.status')){
+						var x = (r.status? '停用':'启用');
+						$('<span class="a"></span>').click(function(){
+							if (confirm('确定要' + x + '这个用户吗？')) {
+								$.post(App.ctx + '/sys/user/status.do', {
+									id: r.id,
+									status: (r.status?0:1) 
+								}, function(rs){
+									gd.loader.params.pageNo = 1;
+									gd.load();
+								});
+							}
+						}).append(x).appendTo(a);
+					}
+					return a;
+				}
+			}],
+		loader: {
+			url: App.ctx + '/sys/user/list.do',
+			params: {
+				pageNo: 1, pageSize: 50,
+				corpId: pg.params.corpId,
+				deptId: pg.params.deptId
+			},
+			autoLoad: true
+		},
+		afterLoad: function(dd){
+			roleGd.find(':checkbox').removeProp('checked');
+		},
+		onRowClick: function(){
+			var tr = $(this), sr = userGd.selected;
+			if (tr.hasClass('selected'))
+				return true;
+			if (sr)
+				sr.removeClass('selected');
+			sr = userGd.selected = tr.addClass('selected');
+			var uid = userGd.data[sr.attr('name')].id;
+			if (ownsCbx.is(":checked")) {
+				roleGd.load({ id: uid });
+			} else {
+				$.post(App.ctx + '/sys/user/listRole.do', {
+					id: uid
+				}, function(rs){
+					var ro = mac.eval(rs);
+					if(ro.success){
+						rca = $.map(ro.data.list, function(o){
+							return o.id;
+						});
+						checkRole();
+					} else {
+						App.error(el.html(), ro.data);
+					}
+				});
+			}
+			return true;
+		},
+		pagerLength: 10
+	});
+	if(!App.logon.power('sys.user.add')){
+		userAdd.hide();
+	}
+	userAdd.click(function(){
+		App.open({
+			ctx:'base',
+			action: 'userEdit',
+			modal: true,
+			params: {
+				corpId: pg.params.corpId,
+				deptId: pg.params.deptId
+			}
+		}, function(){
+			userGd.load();
+		})
+	});
+	userFind.click(function() {
+		userGd.load({ key : userKey.val() });
+	});
+	userKey.keydown(function(e){
+		if (e.keyCode == 13)
+			userFind.click();
+	});
+	if(!App.logon.power('sys.role.list')){
+		roleGd.hide();
+	}
+	roleGd.mac('grid', {
+		cols : [{
+			field : 'id', title : '', width : 24,
+			render : function(r, tr, gd) {
+				if(App.logon.power('sys.user.role.toggle')){
+					var a = $('<input type="checkbox" />').click(function() {
+						var el = $(this);
+						if (!userGd.selected) {
+							mac.alert('请先选择一个用户');
+							return; //如果左侧没有用户，则点击无效
+						}
+						var user = userGd.data[userGd.selected.attr('name')]
+						var w = mac.wait(Msg.info.waiting, [ el.html() ]);
+						$.post(App.ctx + '/sys/user/toggleRole.do', {
+							id: user.id, //当前被选中的用户ID
+							roleId: r.id //当前被选中的模块编号
+						}, function(rs){
+							var ro = mac.eval(rs);
+							if(ro.success){
+								if (ro.data) {
+									rca.push(r.id);
+								} else {
+									var i = $.inArray(r.id, rca);
+									rca.splice(i, 1);
+								}
+							} else {
+								App.error(el.html(), ro.data);
+							}
+							w.close();
+						});
+					});
+					a.attr({
+						name : 'roles',
+						value : r.id
+					});
+					return a;
+				}
+			}
+		}, {
+			field: 'code', title : '编码', width: 80, sort: true
+		}, {
+			field: 'name', title : '名称', width: 120, sort: true
+		}, {
+			field: 'memo', title : '操作', width: 80,
+			render: function(r, tr, gd){
+				var a = $('<div></div>');
+				if(App.logon.power('sys.role.delete')){
+					$('<span class="a"></span>').click(function(){
+						if (confirm('确定要删除这个角色吗？')) {
+							$.post(App.ctx + '/sys/role/delete.do', {
+								id: r.id
+							}, function(rs){
+								gd.loader.params.pageNo = 1;
+								gd.load();
+							});
+						}
+					}).append('删除').appendTo(a);
+					a.append('&nbsp;&nbsp;')
+				}
+				if(App.logon.power('sys.role.status')){
+					var x = (r.status? '停用':'启用');
+					$('<span class="a"></span>').click(function(){
+						if (confirm('确定要' + x + '这个角色吗？')) {
+							$.post(App.ctx + '/sys/user/status.do', {
+								id: r.id,
+								status: (r.status?0:1) 
+							}, function(rs){
+								gd.loader.params.pageNo = 1;
+								gd.load();
+							});
+						}
+					}).append(x).appendTo(a);
+				}
+				return a;
+			}
+		}],
+		loader: {
+			url: App.ctx + '/sys/role/list.do',
+			params: {
+				pageNo: 1, pageSize: 50,
+				corpId: pg.params.corpId
+			},
+			autoLoad: true
+		},
+		pagerLength: 10,
+		afterLoad: function(dd, po, me){
+			if (me.loader.params.id) {
+				rca = $.map(dd, function(o){
+					return o.id;
+				});
+				roleGd.find(':checkbox').prop('checked', 'checked');
+			} else if (rca.length) {
+				checkRole();
+			}
+		}
+	});
+
+	function checkRole(){
+		roleGd.find(':checkbox').each(function(i, a){
+			a = $(a);
+			if ($.inArray(a.val(), rca) < 0) {
+				a.removeProp('checked', 'checked');
+			} else {
+				a.prop('checked', 'checked');
+			}
+		});
+	}
+	
+	roleFind.click(function() {
+		roleGd.load({ key : roleKey.val() });
+	});
+	roleKey.keydown(function(e){
+		if (e.keyCode == 13)
+			roleFind.click();
+	});
+	ownsCbx.click(function() {
+		var el = $(this);
+		if (el.is(':checked')) {
+			if (userGd.selected) {
+				var k = userGd.selected.attr('name');
+				roleGd.load({ pageNo: 1, id: userGd.data[k].id });
+			}
+		} else {
+			roleGd.load({ id: '' });
+		}
+	});
+	
+	pg.find('[placeholder]').mac('placeholder');
+	
+	function adjust(){
+		var h = pg.parent().height();
+		pg.height(h);
+		userPl.height(h);
+		rolePl.height(h);
+		userGd.parent().height(h - 52);
+		roleGd.parent().height(h - 52);
+		userGd.adjust();
+		roleGd.adjust();
+	}
+	$(window).resize(adjust);
+	adjust();
+});
+</script>
+<div class="userPl">
+	<div class="head">
+		<button name="add">添加新用户</button>
+		<input name="key" type="text" placeholder="请输入账户名、真实姓名、手机号或邮箱" />
+		<button name="find">查找</button>
+	</div>
+	<div class="viewPort">
+		<div class="view grid"></div>
+	</div>
+</div>
+<div class="rolePl">
+	<div class="head">
+		<input name="key" type="text" placeholder="请输入编码、名称或备注" />
+		<button name="find">查找</button>
+		<input type="checkbox" name="ownsOnly" /> <span>仅显示已有角色</span>
+	</div>
+	<div class="viewPort">
+		<div class="view grid"></div>
+	</div>
+</div>

@@ -1,0 +1,167 @@
+<script type="text/javascript">
+$(function(){
+	var page = App.adminIndex.ui
+		, id = App.getHashParam('id')
+		, dirCM = page.children('.ctxMenu')
+		, infoPl = page.children('.infoPl')
+		, tree = page.children('.tree');
+
+	dirCM.mac('menu', {
+		children: [{
+			title: '添加公司',
+			action : 'addCompany',
+			icon: 'icon-newwin'
+		},{
+			title : '添加部门',
+			action : 'addDept',
+			icon: 'icon-newwin'
+		},{
+			title : '编辑',
+			action : 'edit',
+			icon: 'icon-newwin'
+		},{
+			title : '删除',
+			action : 'delete',
+			icon: 'icon-newwin'
+		}]
+	});
+	
+	function addNode(d){
+		d.icon = Cache.base.dir.icons[d.type];
+		tree.addNode(d);
+	}
+	function updNode(d){
+		d.icon = Cache.base.dir.icons[d.type];
+		tree.updateNode(d);
+	}
+
+	tree.mac('dtree', {
+		treeConfig: {
+			children: [{
+				key: 'root',
+				title: '我的项目',
+				isLazy: true,
+				isFolder: true,
+				icon: 'root.png'
+			}],
+			imagePath: App.ctx + '/css/img/'
+		},
+		ctxMenu: dirCM,
+		menuOffset: { x: 6, y: 0 },
+		loader: {
+			url: App.ctx + '/dir/list.do',
+			autoLoad: true
+		},
+		onActivate: function(dt) {
+			var d = dt.data;
+			switch (d.type) {
+			case 5:
+				App.show({
+					ctx: 'base',
+					action: 'corpIndex',
+					params: d
+				}, $.noop, infoPl);
+				break;
+			case 6:
+				App.show({
+					ctx: 'base',
+					action: 'deptView',
+					params: d
+				}, $.noop, infoPl);
+				break;
+			}
+		},
+		onCtxMenu: function(el){
+			//var d = el.prop('dtnode').data;
+			var d = $.ui.dynatree.getNode(el).data;
+			dirCM.enableItems();
+			if(!d.level){
+				dirCM.disableItems('edit,delete');
+				return;
+			}
+			//TODO 权限控制？
+			dirCM.disableItems('copy,paste');
+		},
+		onCtxMIClick: {
+			addCompany: function(tree, dt, el, pos){
+				App.show({
+					ctx: 'base',
+					action: 'corpEdit',
+					title: '添加公司',
+					params: { parent: dt.data.key }
+				}, addNode, infoPl);
+			},
+			addDept: function(tree, dt, el, pos){
+				App.show({
+					ctx: 'base',
+					action: 'deptEdit',
+					title: '添加部门',
+					params: { parent: dt.data.key, status: 0 }
+				}, addNode, infoPl);
+			},
+			edit: function(tree, dt, el, pos) {
+				var d = dt.data;
+				switch (d.type) {
+				case 5:
+					App.show({
+						ctx: 'base',
+						action: 'corpEdit',
+						title: '编辑目录',
+						params: d
+					}, updNode, infoPl);
+					break;
+				case 6:
+					App.show({
+						ctx: 'base',
+						action: 'deptEdit',
+						title: '编辑部门',
+						params: d
+					}, updNode, infoPl);
+					break;
+				}
+			},
+			'delete': function(tree, dt, el, pos){
+				var d = dt.data;
+				mac.confirm('确定要删除“' + d.title + '”吗?', function(){
+					var url = '';
+					switch (d.type) {
+					case 5: url = '/corp/delete.do';break;
+					case 6: url = '/dept/delete.do';break;
+					}
+					$.post(App.ctx + url, {
+						id: d.key
+					}, function(dd){
+						var ro = mac.eval(dd);
+						if (ro.success) {
+							tree.deleteNode(d.key);
+							tree.getNode(d.parent).activate();
+						} else {
+							mac.alert(ro.data, ro.params);
+						}
+					});
+				});
+			}
+		},
+		onLoadSubTree: function(dd){
+			$.each(dd, function(i, d){
+				d.icon = Cache.base.dir.icons[d.type];
+			});
+		}
+	}).getNode('root').expand();
+	
+	function adjust(){
+		var p = page.parent(); 
+		tree.height(p.height());
+		infoPl.height(p.height()).width(p.width() - tree.width() - 25);
+	}
+	$(window).resize(adjust);
+	adjust();
+	
+	$('#backBtn').unbind().click(function(){
+		App.go('#');
+	}).show();
+});
+</script>
+<div class="tree"></div>
+<div class="infoPl"></div>
+<ul class="ctxMenu hidden"></ul>

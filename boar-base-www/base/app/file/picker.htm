@@ -1,0 +1,150 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.base.appFilePicker.ui
+		, pp = pg.params, pb = pg.children('.body')
+		, hd = pb.children('.head')
+		, bd = pb.children('.body')
+		, gd = bd.children('.grid')
+		, ft = pb.children('.foot');
+	
+	var tempArr = new Array();
+	var tempObj = new Object();
+	var frm = {
+		env: hd.seek('env'),
+		key: hd.seek('keys'),
+		ok: ft.seek('ok'),
+		cancel: ft.seek('cancel')
+	};
+	frm.env.mac('combo', {
+		width: 80,
+		boxTop: 34,
+		boxWidth: 81,
+		readOnly: 1,
+		data: Cache.env
+	}).select(pp.env);	
+	
+	function toggleSelect(me, check){
+		var k=me.attr('value');
+		if(check==1){
+			me.prop('checked','checked');
+			tempObj[k]=gd.data[k];
+		}else{
+			me.attr('checked',false);
+			delete tempObj[k];
+		}
+		
+		if (me.is(':checked')){
+			tempObj[k]=gd.data[k];
+			//添加被选中元素到对象
+		}else{
+			delete tempObj[k];
+			//删除被取消元素从数组中
+		}
+	}
+	gd.mac('grid', {
+		key: 'id',
+		cols : [{
+			field: 'id', width: 24,
+			title: pp.multi?'<input type="checkbox" name="all" />':'',
+			render : function(r) {
+				if (pp.multi) {
+					return '<input type="checkbox" name="keys" value="' + r.id + '"/>';
+				} else {
+					return '<input type="radio" name="keys" value="' + r.id + '"/>';
+				}
+			}
+		},{
+			field: 'name', title : '文件名称', width: 110
+		},{
+			field: 'code', title : '英文编号', width: 110
+		},{
+			field: 'deployPath', title : '部署路径', width: 110
+		},{
+			field: 'sourcePath', title : '源码路径', width: 110
+		},{
+			field: 'type', title : '状态', width: 70,
+			render: function(r){
+				if(r.type==0){
+					return $('<span>xml</span>')
+				}else if(r.type==1){
+					return $('<span>properties</span>')
+				}else if(r.type==2){
+					return $('<span>txt</span>')
+				}else if(r.type==3){
+					return $('<span>其他类型</span>')
+				}
+			}
+		},{
+			field: 'version', title : '版本号', width: 86
+		},{
+			field: 'memo', title : '备忘录', width: 120,
+		}],
+		loader: {
+			url: pp.url || App.ctx + '/file/list.do',
+			params: $.extend(pp.pms, { pageNo: 1, pageSize: 10 }),
+			autoLoad: true
+		},
+		afterLoad: function(dd, po, me){
+			pg.seek('all').attr('checked',false);
+			var checkList = pg.seek('keys');
+			for(var j=0;j<checkList.length;j++){
+				if(tempObj[$(checkList[j]).attr('value')]){
+					$(checkList[j]).attr('checked','checked');
+				}
+			}
+			pg.seek("keys").click(function(){
+				toggleSelect($(this), 1)
+			});
+		},
+		pagerLength: 10
+	});
+	
+	pg.seek('all').click(function(){
+		if(pg.seek('all').is(':checked')){
+			gd.seek('keys').each(function(){
+				toggleSelect($(this),1);
+			});
+		}else{
+			gd.seek('keys').each(function(){
+				toggleSelect($(this), 0);
+			});
+		}
+	});
+	frm.ok.click(function() {
+		for(var i in tempObj){
+			tempArr.push(tempObj[i]);
+		}
+
+		pg.callback(tempArr);
+		pg.close();
+	});
+	frm.cancel.click(function() {
+		pg.close();
+	});
+	
+	pg.seek('key').keydown(function(e) {
+		if (e.keyCode == 13)
+			gd.load({ key : $(this).val() });
+	});
+	
+	function adjust(){
+		var h = pg.height();
+		gd.parent().height(h - hd.height() - ft.height() - 72);
+		gd.adjust();
+	}
+	//$(window).resize(adjust);
+	adjust();
+});
+</script>
+<div class="head">
+	<span>查询文件：</span>
+	<input name="key" placeholder="文件名" />
+	<button name="find">查找</button>
+</div>
+<div class="body">
+	<div class="grid"></div>
+</div>
+<div class="foot">
+	<button name="ok">确定</button>
+	<button name="cancel">取消</button>
+</div>

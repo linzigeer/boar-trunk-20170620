@@ -1,0 +1,126 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.base.libPicker.ui
+		, pp = pg.params, pb = pg.children('.body')
+		, hd = pb.children('.head')
+		, bd = pb.children('.body')
+		, gd = bd.children('.grid')
+		, ft = pb.children('.foot');
+	
+	var tempArr = new Array();
+	var selectArr = new Array();
+	var tempObj = new Object();
+	var frm = {
+		env: hd.seek('env'),
+		key: hd.seek('key'),
+		ok: ft.seek('ok'),
+		cancel: ft.seek('cancel')
+	};
+	frm.env.mac('combo', {
+		width: 80,
+		boxTop: 34,
+		boxWidth: 81,
+		readOnly: 1,
+		data: Cache.base.env
+	}).select(pp.env);
+	
+	function toggleSelect(me, check){
+		//alert($(this).is(':checked'));
+		var k=me.attr('value');
+		if(check==1){
+			me.prop('checked','checked');
+			tempObj[k]=gd.data[k];
+		}else{
+			me.attr('checked',false);
+			delete tempObj[k];
+		}
+		
+		if(me.is(':checked')){
+			tempObj[k]=gd.data[k];
+			//添加被选中元素到对象
+		}else{
+			delete tempObj[k];
+			//删除被取消元素从数组中
+		}
+		//console.log(JSON.stringify(tempObj));
+	}
+	
+	gd.mac('grid', {
+		key: 'id',
+		cols : [{
+			field: 'id', width: 24,
+			title: pp.multi? '<input type="checkbox" name="all" />':'',
+			render : function(r) {
+				if (pp.multi) {
+					return '<input type="checkbox" name="keys" value="' + r.id + '"/>';
+				} else {
+					return '<input type="radio" name="keys" value="' + r.id + '"/>';
+				}
+			}
+		},{
+			field: 'name', title : '应用名称', width: 210
+		},{
+			field: 'version', title : '版本号', width: 120
+		},{
+			field: 'code', title : '英文编号', width: 210,
+		}],
+		loader: {
+// 			url: App.ctx + '/lib/listAppsNot.do',
+			url: pp.url || App.ctx + '/lib/list.do',
+			params: $.extend(pp.pms || {}, { pageNo: 1, pageSize: 10 }), 
+			autoLoad: true
+		},
+		afterLoad: function(dd, po, me){
+			pg.seek('all').attr('checked',false);
+			var checkList = pg.seek('keys');
+			for(var j=0;j<checkList.length;j++){
+				if(tempObj[$(checkList[j]).attr('value')]){
+					$(checkList[j]).attr('checked','checked');
+				}
+			}
+			pg.seek("keys").click(function(){
+				toggleSelect($(this), 1)
+			});
+		},
+		pagerLength: 10
+	});
+	
+	gd.seek('all').click(function(){
+		if(pg.seek('all').is(':checked')){
+			gd.seek('keys').each(function(){
+				toggleSelect($(this),1);
+			});
+		}else{
+			gd.seek('keys').each(function(){
+				toggleSelect($(this), 0);
+			});
+		}
+	});
+	frm.ok.click(function() {
+		for(var i in tempObj){
+			tempArr.push(tempObj[i]);
+		}
+		
+		pg.callback(tempArr);
+		pg.close();
+	});
+	frm.cancel.click(function() {
+		pg.close();
+	});
+	pg.seek('key').keydown(function(e) {
+		if (e.keyCode == 13)
+			gd.load({ key : $(this).val() });
+	});
+});
+</script>
+<div class="head">
+	<span class="label">查询库包：</span>
+	<input name="key" placeholder="查找" />
+</div>
+<div class="body">
+	<div class="grid"></div>
+</div>
+<div class="foot">
+	<button name="ok">确定</button>
+	<button name="cancel">取消</button>
+</div>

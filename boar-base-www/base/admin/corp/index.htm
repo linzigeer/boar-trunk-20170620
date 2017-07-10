@@ -1,0 +1,93 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.base.corpIndex.ui
+		, pp = pg.params
+		, tabs = pg.find('.tabs')
+		, infoPl = pg.find('.infoPl')
+		, userPl = pg.find('.userPl')
+		, pathPl = pg.find('.pathPl');
+	
+	function init(o) {
+		setValues(o);
+		var items=[{
+			code: 'infoPl',title: '基本信息',el: infoPl
+		},{
+			code: 'userPl', title: '成员管理',
+			auth: 'sys.user.find',
+			render: function(p, c) {
+				App.show({
+					ctx: 'base',
+					action: 'userIndex',
+					params: { app: c.params }
+				}, $.noop, p);
+			}
+		},{
+			code: 'rolePl', title: '角色管理',
+			auth: 'sys.user.role.list',
+			render: function(p, c) {
+				App.show({
+					ctx: 'base',
+					action: 'roleIndex',
+					params: { app: c.params }
+				}, $.noop, p);
+			}
+		}];
+		var ex = App[App.code].corpIndex;
+		if (ex && ex.tabs) {
+			for (var i=0; i<ex.tabs.length; i++) {
+				items.push(ex.tabs[i]);
+			}
+		}
+		items = $.map(items, function(a){
+			if (a.auth && !App.logon.power(a.auth)) {
+				if (a.el) {
+					a.el.hide();
+				}
+				return null;
+			}
+			return a;
+		});
+		
+		tabs.mac('tabs', {
+			tabWidth: 80,
+			items: items,
+			params: o
+		}).selectFirst();
+		
+		function adjust(){
+			var h = pg.parent().height();
+			pg.height(h-30);
+			tabs.height(h-30);
+			tabs.adjust();
+		}
+		$(window).resize(adjust);
+		adjust();
+	}
+	
+	function setValues(o){
+		infoPl.seek('code').text(o.code);
+		infoPl.seek('name').text(o.title);
+		infoPl.seek('path').text(o.path);
+		infoPl.seek('memo').text(o.memo);
+	}
+	
+	init(pg.params);
+});
+</script>
+<div class="tabs"></div>
+<div class="infoPl form">
+	<div class="item">
+		<span class="label">英文名：</span> <span class="value" name="code"></span>
+	</div>
+	<div class="item">
+		<span class="label">中文名：</span> <span class="value" name="name"></span>
+	</div>
+	<div class="item">
+		<span class="label">路径：</span> <span class="value" name="path"></span>
+	</div>
+	<div class="item">
+		<span class="label">备注：</span> <span class="memo" name="memo"></span>
+		<div class="clear"></div>
+	</div>
+</div>
+<div class="pathPl"></div>

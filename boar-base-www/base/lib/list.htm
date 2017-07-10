@@ -1,0 +1,111 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.base.libList.ui, pp = pg.params
+		, gd = pg.seek('grid');
+		
+	gd.mac('grid', {
+		key: 'id',
+		cols: [{
+			field: 'name', title : '库包名称 ', width: 220,
+			render: function(r, tr){
+				return $('<span class="a"></span>').click(function(){
+					if(App.logon.power('lib.save')){
+						App.open({
+							title: '库包信息',
+							ctx: 'base',
+							action: 'libEdit',
+							model: true,
+							params: r
+						},function(){
+							pg.callback(pg.params.id);
+							gd.load()
+						});
+					}
+				}).append(r.name);
+			}
+		},{
+			field: 'code', title : '英文编码', width: 220
+		},{
+			field: 'memo', title : '备忘录 ', width: 220
+		},{
+			field: 'status', title : '状态', width: 80,
+			render: function(r) {
+				return Cache.base.server.status[r.status];
+			}
+		},{
+			field: 'id', title : '操作', width: 120,
+			render: function(r) {
+				var p = $('<div></div>');
+				if (r.status == 0) {
+					$('<span class="a center" style="width:100%"></span>').click(function(){
+						$.post(App.ctx + '/lib/start.do', {
+							ids: r.id,
+							status: 1 
+						}, function(rs){
+							pg.callback(pg.params.id);
+							gd.load();
+						});
+					}).append('启用').appendTo(p);
+				} else if (r.status == 1) {
+					$('<span class="a center" style="width:100%"></span>').click(function(){
+						$.post(App.ctx + '/lib/stop.do', {
+							ids: r.id,
+							status: 0 
+						}, function(rs){
+							pg.callback(pg.params.id);
+							gd.load();
+						});
+					}).append('停用').appendTo(p);
+				}
+				return p;
+			}
+		}],
+		loader: {
+			url: App.ctx + '/lib/list.do',
+			params: {
+				pageNo: 1, pageSize: 10,
+				id: pg.params.id
+			},
+			autoLoad: true
+		},
+		pagerLength: 10
+	});
+	if(!App.logon.power('lib.save')){
+		pg.seek('add').hide();
+	}
+	pg.seek('add').click(function(){
+		App.open({
+			title: '库包信息',
+			ctx: 'base',
+			action: 'libEdit',
+			model: true,
+			params: {
+				parent: pg.params.id
+			}
+		},function(){
+			pg.callback(pg.params.id);
+			gd.load();
+		});
+	});
+	pg.seek('key').keydown(function(e) {
+		if (e.keyCode == 13)
+			gd.load({ key : $(this).val() });
+	});
+	
+	function adjust(){
+		var h = pg.parent().parent().height();
+		pg.height(h);
+		gd.parent().height(h-50);
+		gd.adjust();
+	}
+	$(window).resize(adjust);
+	adjust();
+});
+</script>
+<div class="head">
+	<button name="add">添加库包</button>
+	<input type="text" name="key" class="fr" placeholder="查找" />
+</div>
+<div class="body">
+	<div class="grid" name="grid"></div>
+</div>

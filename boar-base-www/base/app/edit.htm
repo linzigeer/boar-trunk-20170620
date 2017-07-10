@@ -1,0 +1,285 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.base.appEdit.ui,pp = pg.params;
+	var frm = {
+		code: pg.seek('code'),
+		name: pg.seek('name'),
+		type: pg.seek('type'),
+		version: pg.seek('version'),
+		libPath: pg.seek('libPath'),
+		level: pg.seek('level'),
+		catalog: pg.seek('catalog'),
+		user: pg.seek('user'),
+		port: pg.seek('port'),
+		memo: pg.seek('memo'),
+		sourceParent: pg.seek('sourceParent'),
+		sourceCode: pg.seek('sourceCode'),
+		sourcePath: pg.seek('sourcePath'),
+		exportCode: pg.seek('exportCode'),
+		compileCode: pg.seek('compileCode'),
+		packPath: pg.seek('packPath'),
+		deployPath: pg.seek('deployPath'),
+		deployCode: pg.seek('deployCode'),
+		shutdownCode: pg.seek('shutdownCode'),
+		startCode: pg.seek('startCode'),
+		restartCode: pg.seek('restartCode')
+	};
+	
+	frm.type.mac('combo', {
+		keyField: 'k',
+		displayField: 'v',
+		multiSelect: false,
+// 		width: 80,
+// 		boxWidth: 80,
+		cols : [{
+			field: 'v', width: '100%'
+		}],
+		data: [{
+			k: 0, v: '普通应用（需要编译、部署）'
+		}, {
+			k: 1, v: '打包配置（只需要导出源码）'
+		}, {
+			k: 2, v: '应用配置（需要编译、部署）'
+		}]
+	});
+	
+	function getValues(){
+		return {
+			id: pg.params.id,
+			parent: pg.params.parent,
+			code: frm.code.val(),
+			name: frm.name.val(),
+			type: frm.type.val(),
+			version:frm.version.val(),
+			libPath:frm.libPath.val(),
+			level: frm.level.val(),
+			user: frm.user.val(),
+			port: frm.port.val(),
+			memo: frm.memo.val(),
+			
+			sourceParent: frm.sourceParent.val(),
+			sourcePath: frm.sourcePath.val(),
+			sourceCode: frm.sourceCode.val(),
+			exportCode: frm.exportCode.val(),
+			compileCode: frm.compileCode.val(),
+			packPath : frm.packPath.val(),
+			deployPath: frm.deployPath.val(),
+			deployCode: frm.deployCode.val(),
+			shutdownCode: frm.shutdownCode.val(),
+			startCode: frm.startCode.val(),
+			restartCode: frm.restartCode.val()
+		};
+	}
+
+	function setValues(o, pom){
+		pg.seek('title').html(o.id? '编辑应用':'添加应用');
+		frm.code.val(o.code);
+		frm.name.val(o.name);
+		frm.type.val(o.type);
+		frm.version.val(o.version);
+		frm.libPath.val(o.libPath);
+		frm.level.val(o.level);
+		frm.user.val(o.user);
+		frm.port.val(o.port);
+		frm.memo.val(o.memo);
+		
+		frm.sourceParent.val(o.sourceParent);
+		frm.exportCode.val(o.exportCode);
+		frm.compileCode.val(o.compileCode);
+		frm.shutdownCode.val(o.shutdownCode);
+		frm.startCode.val(o.startCode);
+		frm.restartCode.val(o.restartCode);
+		frm.deployCode.val(o.deployCode);
+		frm.sourceCode.val(o.sourceCode);
+		frm.sourcePath.val(o.sourcePath);
+		frm.deployPath.val(o.deployPath);
+		frm.packPath.val(o.packPath);
+	}
+	function validate(p){
+		pg.find('.msg').html('');
+		var x = App.validate, b;
+		b = x('app.code', frm.code, p.code)
+			& x('app.name', frm.name, p.name);
+		if (p.pom) {
+			b = b & x('app.memo', frm.memo, p.memo)& x('app.level', frm.level, p.level)
+		}
+		return b;
+	}
+	pg.find('input').blur(function(){
+		var pms = getValues();
+		if(!validate(pms))
+			return;
+	});
+
+	pg.seek('ok').click(function(){
+		var pms = getValues();
+		if(!validate(pms))
+			return;
+		$.post(App.ctx + '/app/save.do', pms, function(rs){
+			var ro = mac.eval(rs);
+			if (ro.success) {
+				pg.callback(ro.data);//更新树	
+				if(pg.close){
+					pg.close();
+				}else{
+					console.log('else');
+					//pg.callback(null, pg.params.id || pg.params.parent);
+				}
+			} else {
+				pg.seek('msg').html(mac.msg(ro.data, ro.params));
+			}
+		});
+		return false;
+	});
+	setValues(pg.params || {});
+	
+	pg.seek('close').click(function(){
+		var p = pg.params;
+		if (pg.close) {
+			pg.close();
+		}else{
+			pg.callback(null, p.id || p.parent);
+		}
+	});
+	
+ 	if (pg.params.id) {
+		var w = mac.wait('loading'); 
+// 		if (pg.params.id) {
+// 			frm.code.attr('readonly', true);
+// 			frm.catalog.attr('readonly',true);
+// 		}
+		$.get(App.ctx + '/app/get.do', {
+			id : pg.params.id
+ 		}, function(rs) {
+ 			w.close();
+ 			var ro = mac.eval(rs);
+ 			if (ro.success) {
+				setValues(ro.app);
+ 			} else {
+ 				pg.seek('msg').html(mac.msg(ro.data, ro.params));
+ 			}
+		}); 
+	} else {
+		setValues(pg.params, '');
+	}
+ 	
+	function adjust(){
+		var h = pg.height();
+		if(!pg.params.icon){
+			pg.children('.form').height(h);
+		}
+	}
+	$(window).resize(adjust);
+	adjust();
+});
+</script>
+<div class="title" name="title"></div>
+<div class="form">
+	<div class="item">
+		<span class="label">编码：</span>
+		<input type="text" name="code" placeholder="请填入应用的英文名字" />
+		<span class="msg">*</span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">名字：</span> <input type="text" name="name"
+			placeholder="请填入应用的中文名字" /> <span class="msg">*</span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">类型：</span>
+		<div class="combo fl" name="type"></div>
+		<span class="msg">*</span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">端口号：</span> <input type="text" name="port"
+			placeholder="请填入应用的端口号" /> <span class="msg"></span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">用户：</span> <input type="text" name="user"
+			placeholder="请填入应用所属用户" /> <span class="msg"></span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">库包位置：</span> <input type="text" name="libPath"
+			placeholder="请填入应用的库包位置" /> <span class="msg"></span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">版本号：</span> <input type="text" name="version"
+			placeholder="请填入应用的版本号" /> <span class="msg"></span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">优先级：</span>
+		<input type="number" name="level" />
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">源码根路径：</span> <input type="text"
+			name="sourceParent" placeholder="请填入应用的源码根路径" /> <span class="msg"></span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">源码相对路径：</span> <input type="text"
+			name="sourcePath" placeholder="请填入应用的源码路径" /> <span class="msg"></span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">源码构建：</span> <input type="text" name="sourceCode"
+			placeholder="请填入源码构建" /> <span class="msg"></span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">导出构建：</span> <input type="text" name="exportCode"
+			placeholder="请填入导出构建" /> <span class="msg"></span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">打包构建：</span> <input type="text"
+			name="compileCode" placeholder="请填入打包构建" /> <span class="msg"></span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">包生成路径：</span> <input type="text"
+			name="packPath" placeholder="请填入应用包生成路径" /> <span class="msg"></span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">部署构建：</span> <input type="text"
+			name="deployCode" placeholder="请填入部署构建" /> <span class="msg"></span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">部署路径：</span> <input type="text" name="deployPath"
+			placeholder="请填入应用的部署路径" /> <span class="msg"></span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">启动构建：</span> <input type="text"
+			name="startCode" placeholder="请填入启动构建" /> <span class="msg"></span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">重启构建：</span> <input type="text"
+			name="restartCode" placeholder="请填入重启构建" /> <span class="msg"></span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">停机构建：</span> <input type="text"
+			name="shutdownCode" placeholder="请填入停机构建" /> <span class="msg"></span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">备忘录：</span>
+		<textarea name="memo" placeholder="请填入应用的memo"></textarea>
+		<div class="clear"></div>
+	</div>
+	<div class="bottom">
+		<button name="ok" class="addBtn">确定</button>
+		&nbsp;&nbsp;
+		<button name="close" class="addBtn">取消</button>
+	</div>
+</div>

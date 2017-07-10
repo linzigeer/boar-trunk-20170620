@@ -1,0 +1,113 @@
+<script type="text/javascript">
+$(function() {
+	var pg = App.base.roleEdit.ui;
+	pg.params = pg.params || { status: '0' };
+	var frm = {
+		code : pg.seek('code'),
+		name : pg.seek('name'),
+		status : pg.seek('status'),
+		memo : pg.seek('memo')
+	}
+	
+	frm.status.mac('combo', {
+		keyField: 'k',
+		displayField: 'v',
+		multiSelect: false,
+		width: 80,
+		boxWidth: 80,
+		cols : [{
+			field: 'v', width: 80
+		}],
+		data: [{ k: 0, v: '未启用' }, { k: 1, v: '已启用' }]
+	});
+	
+	function getValues(){
+		return {
+			id: pg.params.id,
+			corpId: pg.params.corpId,
+			deptId: pg.params.deptId,
+			code : frm.code.val(), // 角色ID
+			name : frm.name.val(), // 角色名称
+			status : frm.status.selected[0], // 0未启用，1启用
+			memo : frm.memo.val(), // 描述
+		};
+	}
+	
+	function setValues(o){
+		frm.code.val(o.code); // 角色编号
+		frm.name.val(o.name); // 角色名称
+		frm.status.select(o.status+''); // 0未启用，1启用
+		frm.memo.val(o.memo);// 描述
+	}
+	
+	function valid(p){
+		pg.find('.msg').html('');
+		if(!p.code){
+			frm.code.next().html('编号不能为空');
+			return false;
+		}
+		if(!p.name){
+			frm.name.next().html('名称不能为空');
+			return false;
+		}
+		return true;
+	}
+	
+	pg.seek('ok').click(function(){
+		var pms = getValues();
+		if(!valid(pms))
+			return false;
+		$.post(App.ctx + '/sys/role/save.do', pms, function(data){
+			var ro = mac.eval(data);
+			if(ro.success){
+				pg.callback();
+				pg.close();
+			}else{
+				pg.seek('msg').html(mac.msg(ro.data, ro.params));
+			}
+		});
+		return false;
+	});
+	
+	pg.seek('cancel').click(function(){
+		pg.close();
+	});
+	
+	if(pg.params.code){
+		frm.code.prop('readonly', 'readonly').css('border', 'none');
+	}
+	
+	setValues(pg.params);
+});
+</script>
+<div class="form">
+	<div class="item">
+		<div class="label">编号:</div>
+		<input type="text" name="code" style="width: 290px"
+			pattern="\w+(\.\w+)*" required="required" maxlength="32"
+			class="empty" />
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<div class="label">名称:</div>
+		<input type="text" name="name" style="width: 290px"
+			required="required" maxlength="64" class="empty" />
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<div class="label">状态:</div>
+		<div class="combo fl" name="status"></div>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<div class="label">备注:</div>
+		<textarea name="memo" style="width: 290px" maxlength="255"
+			class="empty"></textarea>
+		<div class="clear"></div>
+	</div>
+	<div class="msg"></div>
+	<div class="bottom">
+		<button name="ok">保存</button>
+		<button name="cancel">取消</button>
+	</div>
+</div>

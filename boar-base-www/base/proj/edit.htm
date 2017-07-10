@@ -1,0 +1,145 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.base.projEdit.ui;
+	var frm = {
+		code: pg.seek('code'),
+		name: pg.seek('name'),
+		sourcePath:pg.seek('sourcePath'),
+		version:pg.seek('version'),
+		memo: pg.seek('memo'),
+		sourceCode:pg.seek('sourceCode'),
+		exportCode:pg.seek('exportCode'),
+		compileCode:pg.seek('compileCode'),
+		deployCode:pg.seek('deployCode')
+		
+	};
+	function getValues(){
+		
+		return {
+			id: pg.params.key,
+			parent: pg.params.parent,
+			type: C.PROJ, // 9
+			code: frm.code.val(),
+			name: frm.name.val(),
+			version:frm.version.val(),
+			sourcePath:frm.sourcePath.val(),
+			memo: frm.memo.val(),
+			sourceCode:frm.sourceCode.val(),
+			exportCode:frm.exportCode.val(),
+			compileCode:frm.compileCode.val(),
+			deployCode:frm.deployCode.val()
+		};
+	}
+	function setValues(o){
+		pg.seek('title').html(o.id? '编辑系统':'添加系统');
+		frm.code.val(o.code);
+		frm.name.val(o.name);
+		frm.version.val(o.version);
+		frm.sourcePath.val(o.sourcePath);
+		frm.memo.val(o.memo);
+		frm.sourceCode.val(o.sourceCode);
+		frm.exportCode.val(o.exportCode);
+		frm.compileCode.val(o.compileCode);
+		frm.deployCode.val(o.deployCode)
+	}
+	function validate(p){
+		pg.find('.msg').html('');
+		var x = App.validate, b;
+		return x('proj.code', frm.code, p.code) & x('proj.name', frm.name, p.name);
+	}
+	pg.seek('ok').click(function(){
+		var pms = getValues();
+		if(!validate(pms))
+			return;
+		$.post(App.ctx + '/proj/save.do', pms, function(rs){
+			var ro = mac.eval(rs);
+			if (ro.success) {
+				pg.callback(ro.data);//更新树	
+				if(pg.close){
+					pg.close();
+				}else{
+					//pg.callback(null, pg.params.id || pg.params.parent);
+				}
+			} else {
+				pg.seek('msg').html(mac.msg(ro.data, ro.params));
+			}
+		});
+		return false;
+	});
+	
+	function adjust(){
+		/* var h = pg.parent().height();
+		pg.height(h); */
+	}
+	$(window).resize(adjust);
+	adjust();	
+
+// 	var w = mac.wait('loading');
+	if (pg.params.id) {
+		frm.code.attr('readonly', true);
+		$.get(App.ctx + '/proj/get.do', {
+			id: pg.params.id
+		}, function(rs) {
+			var ro = mac.eval(rs);
+			if (ro.success) {
+				setValues(ro.data);
+			} else {
+				pg.seek('msg').html(mac.msg(ro.data, ro.params));
+			}
+// 			w.close();
+ 		});
+	} else {
+		setValues(pg.params);
+	}
+});
+</script>
+<div class="title" name="title">编辑系统</div>
+<div class="form">
+	<div class="item">
+		<span class="label">英文名：</span> <input type="text" name="code" /> <span
+			class="msg">*</span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">中文名：</span> <input type="text" name="name" /> <span
+			class="msg">*</span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">源码根路径：</span> <input type="text" name="sourcePath" />
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">源码来源</span> <input type="text" name="sourceCode" />
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">打包构建</span> <input type="text" name="compileCode" />
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">部署构建</span> <input type="text" name="deployCode" />
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">导出构建</span> <input type="text" name="exportCode" />
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">版本号：</span> <input type="text" name="version" />
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">备注：</span>
+		<textarea name="memo"></textarea>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">&nbsp;</span>
+		<div name="msg"></div>
+		<div class="clear"></div>
+	</div>
+	<div class="bottom">
+		<button name="ok">保存</button>
+	</div>
+</div>

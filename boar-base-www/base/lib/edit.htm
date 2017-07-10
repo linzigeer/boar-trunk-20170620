@@ -1,0 +1,199 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.base.libEdit.ui,pp = pg.params;
+	var frm = {
+		name: pg.seek('name'),
+		ver:pg.seek('ver'),
+		type: pg.seek('type'),
+		code: pg.seek('code'),
+		level: pg.seek('level'),
+		memo: pg.seek('memo'),
+		sourceParent: pg.seek('sourceParent'),
+		sourceCode: pg.seek('sourceCode'),
+		sourcePath: pg.seek('sourcePath'),
+		exportCode: pg.seek('exportCode'),
+		compileCode: pg.seek('compileCode'),
+		packPath: pg.seek('packPath')
+	}
+	
+	frm.type.mac('combo', {
+		keyField: 'k',
+		displayField: 'v',
+		multiSelect: false,
+// 		width: 140,
+// 		boxWidth: 140,
+		cols : [{
+			field: 'v', width: '100%'
+		}],
+		data: [{ k: 0, v: 'jar包' }, { k: 1, v: 'war包' }]
+	}).val(0);
+	
+	function getValues(){
+		var pid = pg.params.parent;
+		return {
+			id: pg.params.id,
+			parent: pg.params.parent, 
+			name: frm.name.val(),
+			ver: frm.ver.val(),
+			type: frm.type.selected[0],// 0jar包，1war包 
+			code: frm.code.val(),
+			level: frm.level.val(),
+			memo: frm.memo.val(),
+			
+			sourceParent: frm.sourceParent.val(),
+			sourcePath: frm.sourcePath.val(),
+			sourceCode: frm.sourceCode.val(),
+			exportCode: frm.exportCode.val(),
+			compileCode: frm.compileCode.val(),
+			packPath: frm.packPath.val()
+		};
+	}
+	function setValues(o, pom){
+		pg.seek('title').html(o.id? '编辑库':'添加库');
+		frm.name.val(o.name);
+		frm.ver.val(o.ver);
+		frm.type.val(o.type);
+		frm.code.val(o.code);
+		frm.level.val(o.level);
+		frm.memo.val(o.memo);
+		
+		frm.sourceParent.val(o.sourceParent);
+		frm.exportCode.val(o.exportCode);
+		frm.compileCode.val(o.compileCode);
+		frm.sourceCode.val(o.sourceCode);
+		frm.sourcePath.val(o.sourcePath);
+		frm.packPath.val(o.packPath);
+	}
+	function validate(p){
+		pg.find('.msg').html('');
+		var x = App.validate, b;
+		b = x('lib.name', frm.name, p.name) & x('lib.code', frm.code, p.code) 
+			& x('lib.ver', frm.ver, p.ver) & x('lib.level', frm.level, p.level);
+		return b;
+	}
+	pg.seek("input").blur(function(){
+		var pms = getValues();
+		if(!validate(pms))
+			return;
+	});
+	
+	pg.seek('ok').click(function(){
+		var pms = getValues();
+		if(!validate(pms)) {
+			return;
+		}
+		$.post(App.ctx + '/lib/save.do', pms, function(rs){
+			var ro = mac.eval(rs);
+			if (ro.success) {
+				pg.callback(ro.data);//更新树	
+				if(pg.close){
+					pg.close();
+				}else{
+					//pg.callback(null, pg.params.id || pg.params.parent);
+				}
+			} else {
+				pg.seek('msg').html(mac.msg(ro.data, ro.params));
+			}
+		});
+		return false;
+	});
+	setValues(pg.params || { type: '0' });
+	
+	pg.seek('close').click(function(){
+		var p = pg.params;
+		if (pg.close) {
+			pg.close();
+		}else{
+			pg.callback(null, p.id || p.parent);
+		}
+	})
+
+	if (pg.params.id) {
+		/* frm.name.attr('readonly', true); */
+		var w = mac.wait('Loading');
+		$.get(App.ctx + '/lib/get.do', {
+			id: pg.params.id
+		}, function(rs) {
+			var ro = mac.eval(rs);
+			if (ro.success) {
+				setValues(ro.data, '');
+			} else {
+				pg.seek('msg').html(mac.msg(ro.data, ro.params));
+			}
+			w.close();
+		});
+	} else {
+		setValues(pg.params, '');
+	};
+});
+</script>
+<div class="title">
+	<span class="value" name="title" style="font-weight:bold;"></span>
+</div>
+<div class="form">
+	<div class="item">
+		<span class="label">名字：</span>
+		<input type="text" name="name" placeholder="请填入库包的中文名字" /> 
+		<span class="msg">*</span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">编码：</span>
+		<input type="text" name="code" placeholder="请填入库包的英文名字" />
+		<span class="msg">*</span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">版本号：</span> <input type="text" name="ver"
+			placeholder="请填入库包的版本号" /> <span class="msg">*</span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">类型：</span>
+		<div class="combo fl" name="type"></div>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">优先级：</span> <input type="number" name="level" />
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">源码根路径：</span> <input type="text"
+			name="sourceParent" placeholder="请填入应用的源码根路径" /> <span class="msg"></span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">源码相对路径：</span> <input type="text"
+			name="sourcePath" placeholder="请填入应用的源码路径" /> <span class="msg"></span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">源码构建：</span> <input type="text" name="sourceCode"
+			placeholder="请填入源码构建" /> <span class="msg"></span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">导出构建：</span> <input type="text" name="exportCode"
+			placeholder="请填入导出构建" /> <span class="msg"></span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">打包构建：</span> <input type="text" name="compileCode"
+			placeholder="请填入打包构建" /> <span class="msg"></span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">包生成路径：</span> <input type="text" name="packPath"
+			placeholder="请填入应用包生成路径" /> <span class="msg"></span>
+		<div class="clear"></div>
+	</div>
+	<div class="item">
+		<span class="label">备注：</span>
+		<textarea name="memo"></textarea>
+		<div class="clear"></div>
+	</div>
+	<div class="bottom">
+		<button name="ok" class="addBtn">确定</button>
+		<button name="close" class="addBtn">取消</button>
+	</div>
+</div>

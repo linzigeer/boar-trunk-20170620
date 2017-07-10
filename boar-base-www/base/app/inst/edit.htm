@@ -1,0 +1,141 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.base.appInstEdit.ui, pm = pg.params;
+	var frm = {
+		path: pg.seek('path'),
+		port: pg.seek('port'),
+		user: pg.seek('user'),
+		appCode: pg.seek('appCode'),
+		appName: pg.seek('appName'),
+		serverCode: pg.seek('serverCode'),
+		serverName: pg.seek('serverName')
+	};
+	pg.seek('pickServer').click(function(){
+		pg.hide();
+		App.open({
+			title: '请选择一个服务器',
+			ctx: 'base',
+			action: 'serverPicker',
+			params: { env: 'ALL', multi: 0, projId: pm.app.projId },
+			model: true,
+			onClose: function(){
+				pg.show();
+			}
+		}, function(ss){
+			if (ss && ss.length == 1) {
+				var s = pm.server = ss[0];
+				frm.serverCode.val(s.code);
+				frm.serverName.val(s.name);
+			}
+		});
+		return false;
+	});
+	function getValues(){
+		return {
+			id: pm.id,
+			serverId: pm.server.id,
+			appId: pm.app.id,
+			path: frm.path.val(),
+			port: frm.port.val(),
+			user: frm.user.val()
+		};
+	}
+	function setValues(o){
+		frm.appCode.val(o.app.code);
+		frm.appName.val(o.app.name)
+		if (o.server) {
+			frm.serverCode.val(o.server.code);
+			frm.serverName.val(o.server.name);
+		}
+		frm.path.val(o.path);
+		frm.port.val(o.port);
+		frm.user.val(o.user);
+	}
+	function validate(p){
+		pg.find('.msg').html('');
+		var x = App.validate, b;
+		b = x('app.inst.path', frm.path, p.path) & x('app.inst.user', frm.user, p.user);
+		return b;
+	}
+	pg.find('input').blur(function(){
+		var pms = getValues();
+		if(!validate(pms))
+			return;
+	});
+	pg.seek('ok').click(function(){
+		var pms = getValues();
+		if(!validate(pms))
+			return;
+		$.post(App.ctx + '/app/inst/save.do', pms, function(rs){
+			var ro = mac.eval(rs);
+			if (ro.success) {
+				pg.callback(ro.data);//更新树	
+				pg.close();
+			} else {
+				pg.seek('msg').html(mac.msg(ro.data, ro.params));
+			}
+		});
+		return false;
+	});
+	pg.seek('close').click(function(){
+		pg.close();
+	});
+	setValues(pg.params);
+});
+</script>
+<div class="left">
+	<div class="form">
+		<div class="item">
+			<span class="label">应用编号：</span>
+			<input type="text" name="appCode" placeholder="应用编号" disabled />
+			<span class="msg">*</span>
+			<div class="clear"></div>
+		</div>
+		<div class="item">
+			<span class="label">应用名称：</span>
+			<input type="text" name="appName" placeholder="应用名称" disabled />
+			<span class="msg">*</span>
+			<div class="clear"></div>
+		</div>
+		<div class="item">
+			<span class="label">服务器编号：</span>
+			<div class="input">
+				<input type="text" name="serverCode" placeholder="请选择一个服务器" disabled />
+				<div class="picker" name="pickServer">
+					<span class="icon">&nbsp;</span>
+				</div>
+			</div>
+			<span class="msg">*</span>
+			<div class="clear"></div>
+		</div>
+		<div class="item">
+			<span class="label">服务器名称：</span>
+			<input type="text" name="serverName" placeholder="服务器名称" disabled />
+			<span class="msg">*</span>
+			<div class="clear"></div>
+		</div>
+		<div class="item">
+			<span class="label">根路径：</span>
+			<input type="text" name="path" placeholder="应用安装根路径" />
+			<span class="msg">*</span>
+			<div class="clear"></div>
+		</div>
+		<div class="item">
+			<span class="label">用户：</span>
+			<input type="text" name="user" placeholder="应用的所属用户" />
+			<span class="msg">*</span>
+			<div class="clear"></div>
+		</div>
+		<div class="item">
+			<span class="label">端口号：</span>
+			<input type="text" name="port" placeholder="应用主端口（可选）" />
+			<span class="msg"></span>
+			<div class="clear"></div>
+		</div>
+		<span class="msg" name="msg"></span>
+		<div class="bottom">
+			<button name="ok" class="addBtn">确定</button>
+			<button name="close" class="addBtn">取消</button>
+		</div>
+	</div>
+</div>

@@ -1,0 +1,251 @@
+body { overflow: hidden; background: #fff; }
+span.a { cursor: pointer; color: #339; }
+a { cursor: pointer; }
+button {
+	cursor: pointer; border: 1px solid #fff; border-radius: 4px; color: #fff;
+	font-size: 14px; height: 30px; width: auto; background: #2B7BBD; margin-right: 12px
+}
+button.a { background: transparent; height: auto; }
+
+.center {
+	display: block; width: 80px; height: 24px; text-align: center !important;
+}
+
+/* .tabs>.body>.main>div { min-width: 860px; } */
+.tabs>.body>.main>div>.head {
+	padding: 12px 12px 0px 12px; height: 32px; line-height: 32px;
+}
+.tabs>.body>.main>div>.body { padding: 12px 12px 0px 12px; }
+
+.dialog>.body { padding: 12px; }
+.dialog>.body>.body { margin-top: 12px; }
+.dialog>.body>.head { height: 32px; line-height: 32px; }
+.dialog>.body>.foot { margin-top: 8px; height: 32px; line-height: 32px; text-align: center; }
+
+.form .label { width: 120px }
+/* .form .input[type=text] { height: 24px; border: 1px solid #CCC; } */
+
+input.key { height: 24px; float: right; }
+
+.inline { display: -moz-inline-block; display: inline-block }
+
+#head {
+	height: 60px; color: #FFFFFF; line-height: 60px;
+	border-bottom: 2px solid #84b9e3;
+	background-color: #388CD2;
+}
+#head>.main { float: left; margin-left: 30px; height: 40px; }
+#head>.main .title { font-size: 32px; }
+
+#head>.logon {
+	float: right; width: 420px; height: 40px; text-align: right;
+	font-size: 14px; margin-right: 20px
+}
+#head>.logon .a { margin-left: 24px }
+
+#head>.logo {
+	background: url('/base/css/img/logo.jpg');
+	width: 244px; height: 60px;
+}
+
+#head>.title { height: 60px; line-height: 80px; }
+
+#head span.a { color: #CCFFCC; }
+
+#head .btn1 {
+	width: 60px; height: 60px; border: none; cursor: pointer;
+	background-color: transparent; background-repeat: no-repeat;
+}
+#head .btn1:hover { background-color: #2B7BBD; }
+
+/* 导航 */
+#backBtn { float: left; background-image: url(./img/back0.png); }
+#saveBtn { float: right; background-image: url(./img/save0.png); }
+#menuBtn { float: right; background-image: url(./img/menu2.png); }
+
+.login .form { margin-top: 32px; }
+.login input.code { width: 258px; }
+.login input.password { width: 258px; }
+.login input.verifyCode { width: 108px; }
+#vcImg { height: 26px; }
+
+/* */
+#body .infoPl { float: left; overflow: auto }
+#body .infoPl>div>.title { margin: 12px 0px 0px 12px; font-size: 24px; }
+#body .infoPl>div>.form { margin: 12px }
+#body .infoPl>div>.form>.item>input[type=text] { width: 338px; }
+#body .infoPl>div>.form>.item>span { height: 24px; line-height: 24px; }
+#body .infoPl>div>.form>.item>textarea { width: 338px; height: 100px; }
+
+#body .form { float: left; }
+
+#body .dirIndex .tree, #body .adminIndex .tree, #body .appIndex .tree {
+	width: 240px;
+	float: left;
+	overflow: hidden;
+	border-right: 1px solid #CCC;
+}
+body .dirPicker .tree {
+	margin: 12px; border: 1px solid #CCC; width: 456px; height: 480px;
+}
+
+.appEdit .form { float: left; width: 600px; margin: 12px 0 0 30px; }
+.appEdit .form input[type=text] { width: 314px; }
+
+.appInstEdit .form input[type=text] { width: 324px; }
+.appInstEdit .form .input input[type=text] { width: 300px; }
+
+.serverEdit .form input[type=text] { width: 270px; }
+.serverEdit .form .item>textarea { width: 270px; height: 130px; }
+.serverEdit .form .item>.msgColor { width: 330px; height: 20px; color: red; }
+.serverEdit .form .buttonTop { margin-top: 30px; }
+.comEdit .form { float: left; width: 540px; margin: 12px; }
+.comEdit .form textarea { height: 108px; width: 258px; }
+.comEdit .form .item>input[type=text] { width: 258px; }
+.comPicker>.body>.form { height: 24px; margin: 12px 12px 8px 12px; }
+.comPicker>.body>.main { height: 380px; margin: 12px; }
+
+.depView>.body>.body>.grid {
+	height: 368px !important;
+}
+
+.adminIndex>.left {
+	border: 1px solid #CCC;
+	background-color: #FFF;
+	float: left;
+	width: 320px;
+}
+
+.adminIndex>.left>.head {
+	height: 48px;
+	font-size: 32px;
+	line-height: 32px;
+}
+
+.adminIndex>.main {
+	float: left;
+}
+
+.deptEdit>.form { width: 520px; float: left; margin-left: 24px; }
+.deptView .userPl .viewPort { height: 320px; }
+
+.userIndex>.userPl {
+	width: 390px;
+	overflow: hidden;
+	float: left;
+	margin-right: 8px;
+}
+
+.userIndex>div>.head,
+.roleIndex>div>.head {
+	height: 32px;
+	line-height: 32px;
+	padding: 12px 12px 0;
+}
+
+.userIndex>div>.viewPort,
+.roleIndex>div>.viewPort {
+	border: 1px solid #CCC;
+	margin: 12px 0 0 12px;
+}
+
+.userIndex>.rolePl { overflow: hidden; float: left; }
+
+.rolePl>.head { height: 32px; line-height: 32px; margin-bottom: 12px; }
+.roleIndex>.rolePl { width: 340px; overflow: hidden; float: left; margin-right: 8px; }
+.roleIndex>.funcPl { width: 420px; overflow: hidden; float: left; }
+.roleIndex>.funcPl>.head { height: 32px; line-height: 32px; margin-bottom: 12px; }
+
+.picBtn {
+	margin: 8px 0px 0px 10px;
+}
+
+.addSpn {
+	margin-left: 22px;
+}
+
+.disAddbtn {
+	background-color: F0F0F0;
+	color: #ccc;
+	border-radius: 5px;
+	font-size: 14px;
+	height: 30px;
+	width: 80px;
+}
+/* 应用管理 */
+.appPicker>.body>.body>.grid {
+	height: 368px !important;
+}
+.appPicker>.body>.body>.grid .main {
+	margin: 8px 0px 0px 8px;
+}
+.appLibPicker>.body>.body>.grid {
+	height: 368px !important;
+}
+.appLibPicker>.body>.body>.grid .main {
+	margin: 8px 0px 0px 8px;
+}
+
+.sevEdit .form .item>input {
+	width: 290px;
+}
+
+.sevEdit .form .item>textarea {
+	width: 290px;
+}
+
+.sevEdit .form .item>.combo>.body {
+	width: 180px !important;
+	text-align: right;
+}
+
+.sevEdit .form .item>.combo>.body>.tr {
+	text-align: center;
+	width: 40%;
+}
+
+/* 库包管理 */
+.libPicker>.body>.body>.grid {
+	height: 328px !important;
+}
+
+.libPicker>.body>.body>.grid {
+	height: 368px !important;
+}
+
+.libPicker>.body>.body>.grid .main {
+	height: 368px !important;
+	margin: 8px 0px 0px 22px;
+}
+
+.libEdit .form .item>textarea {
+	width: 300px;
+}
+
+.libEdit .form .item>.combo>.body {
+	width: 180px !important;
+	text-align: right;
+}
+
+.libEdit .form .item>.combo>.body>.tr {
+	text-align: center;
+	width: 40%;
+}
+
+.libOnMeIndex .appPl>.head { padding: 12px 12px 0px 12px; height: 32px; line-height: 32px; }
+.libOnMeIndex .appPl>.body { padding: 12px 12px 0px 12px; }
+.libOnMeIndex .soaPl>.head{	padding: 12px 12px 0px 12px; height: 32px; line-height: 32px; }
+.libOnMeIndex .soaPl>.body { padding: 12px 12px 0px 12px; }
+
+.serverEdit .form .item>.combo>.body {
+	left: 128px !important;
+	text-align: center;
+}
+
+.dirView .grid .main {
+	width: 900px !important;
+}
+
+.dirView .tabs>.body>.main>div>.head {
+	width: 900px !important;
+}

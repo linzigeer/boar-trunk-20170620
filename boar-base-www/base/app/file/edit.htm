@@ -1,0 +1,174 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.base.appFileEdit.ui, pp = pg.params;
+	var frm = {
+		code: pg.seek('code'),
+		name: pg.seek('name'),
+		sourcePath: pg.seek('sourcePath'),
+		deployPath: pg.seek('deployPath'),
+		packPath: pg.seek('packPath'),
+		version:pg.seek('version'),
+		type: pg.seek('type'),
+		memo: pg.seek('memo')
+	};
+	function getValues(){
+		return {
+			id: pg.params.id,
+			appId: pg.params.appId,
+ 			parent: pg.params.parent,
+ 			projId: pg.params.projId,
+			code: frm.code.val(),
+			name: frm.name.val(),
+			sourcePath: frm.sourcePath.val(),
+			deployPath: frm.deployPath.val(),
+			packPath: frm.packPath.val(),
+			version: frm.version.val(),
+			type: frm.type.selected[0],// 0-xml 1-properties 2-txt 3-其他类型
+			memo: frm.memo.val()
+		};
+	}
+	
+	
+	function setValues(o){
+		pg.params.id=o.id;
+		frm.code.val(o.code);
+		frm.name.val(o.name);
+		frm.sourcePath.val(o.sourcePath);
+		frm.deployPath.val(o.deployPath);
+		frm.packPath.val(o.packPath);
+		frm.version.val(o.version);
+		frm.type.val(o.type);
+		frm.memo.val(o.memo);
+	}
+	function validate(p){
+		pg.find('.msg').html('');
+		var x = App.validate, b;
+		b = x('app.code', frm.code, p.code)
+			& x('app.name', frm.name, p.name) 
+			& x('app.version', frm.version, p.version);
+// 			& x('app.sourcePath', frm.sourcePath, p.sourcePath)
+// 			& x('app.deployPath', frm.deployPath, p.deployPath)
+// 			& x('app.packPath', frm.packPath, p.packPath);
+		if (p.pom) {
+			b = b & x('app.memo', frm.memo, p.memo)& x('app.type', frm.type, p.type)
+				& x('app.deployPath', frm.deployPath, p.deployPath) & x('app.packPath', frm.packPath, p.packPath);
+		}
+		return b;
+	}
+	 $("input").blur(function(){
+		var pms = getValues();
+		if(!validate(pms))
+			return;
+	});
+	pg.seek('ok').click(function(){
+		var pms = getValues();
+		if(!validate(pms))
+			return;
+		$.post(App.ctx + '/file/save.do', pms, function(rs){
+			var ro = mac.eval(rs);
+			if (ro.success) {
+				pg.callback(ro.data);//更新树	
+				pg.close();
+			} else {
+				pg.seek('msg').html(mac.msg(ro.data, ro.params));
+			}
+		});
+		return false;
+	});
+	setValues(pg.params || {});
+	
+	pg.seek('close').click(function(){
+		pg.close();
+	});
+
+	if (pg.params.id) {
+		/*  frm.code.attr('readonly', true); */
+		/* var w = mac.wait('loading'); */
+		$.get(App.ctx + '/file/get.do', {
+			id : pg.params.id
+		}, function(rs) {
+			var ro = mac.eval(rs);
+			if (ro.success) {
+				setValues(ro.data);
+			} else {
+				pg.seek('msg').html(mac.msg(ro.data, ro.params));
+			}
+			/* w.close(); */
+		}); 
+	} else {
+		setValues(pg.params, '');
+	};
+	/* 查找框 */
+	frm.type.mac('combo', {
+		keyField: 'k',
+		displayField: 'v',
+		multiSelect: false,
+		width: 140,
+		boxWidth: 140,
+		cols : [{
+			field: 'v', width: 80
+		}],
+		data: [{ k: 0, v: 'xml' }
+			, { k: 1, v: 'properties' }
+			, { k: 2, v: 'txt' }
+			, { k: 3, v: 'conf' }
+			, { k: 4, v: 'sql' }
+			, { k: 5, v: 'shell' }
+			, { k: 6, v: 'dir' }
+			, { k: 7, v: '其他类型' }]
+	}).val(0);
+});
+</script>
+<div class="left">
+	<div class="form">
+		<div class="item">
+			<span class="label">英文编号：</span> <input type="text" name="code"
+				placeholder="请填入英文名字" /> <span class="msg">*</span>
+			<div class="clear"></div>
+		</div>
+		<div class="item">
+			<span class="label">名字：</span> <input type="text" name="name"
+				placeholder="请填入中文名字" /> <span class="msg">*</span>
+			<div class="clear"></div>
+		</div>
+		<div class="item">
+			<span class="label">源码路径：</span> <input type="text" name="sourcePath"
+				placeholder="请填入源码路径" /> <span class="msg">*</span>
+			<div class="clear"></div>
+		</div>
+		<div class="item">
+			<span class="label">打包路径：</span> <input type="text" name="packPath"
+				placeholder="请填入打包路径" />
+			<div class="clear"></div>
+		</div>
+		<div class="item">
+			<span class="label">部署路径：</span> <input type="text" name="deployPath"
+				placeholder="请填入部署路径" />
+			<div class="clear"></div>
+		</div>
+		<div class="item">
+			<span class="label">类型：</span>
+			<div class="combo" name="type"></div>
+			<div class="clear"></div>
+		</div>
+		<div class="item">
+			<span class="label">版本号：</span> <input type="text" name="version"
+				placeholder="请填入版本号" /> <span class="msg">*</span>
+			<div class="clear"></div>
+		</div>
+		<div class="item">
+			<span class="label">备忘录：</span>
+			<textarea name="memo" placeholder="请填入memo"></textarea>
+			<div class="clear"></div>
+		</div>
+		<div class="item">
+			<span class="label">&nbsp;</span>
+			<div class="clear"></div>
+		</div>
+		<div class="bottom">
+			<button name="ok" class="addBtn">确定</button>
+			&nbsp;&nbsp;
+			<button name="close" class="addBtn">取消</button>
+		</div>
+	</div>
+</div>

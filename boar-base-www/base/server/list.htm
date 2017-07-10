@@ -1,0 +1,118 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.base.serverList.ui ,pp = pg.params
+		, gd = pg.seek('grid');
+		
+	gd.mac('grid', {
+		cols : [{
+			field: 'ip', title : 'IP地址', width: 120
+		},{
+			field: 'code', title : '编号 ', width: 200
+		},{
+			field: 'name', title : '名称 ', width: 210
+		},{
+			field: 'status', title : '状态', width: 70,
+			render: function(r) {
+				return Cache.base.server.status[r.status];
+			}
+		},{
+			field: 'id', title : '操作', width: 200,
+			render: function(r) {
+				var p = $('<div></div>');
+				if (App.logon.power('server.stop')){
+					if (r.status == 0) {
+						$('<span class="a"></span>').click(function(){
+							
+						}).append('启用').appendTo(p);
+					} else if (r.status == 1) {
+						$('<span class="a"></span>').click(function(){
+							
+						}).append('停用').appendTo(p);
+					}
+					p.append('&nbsp;&nbsp;&nbsp;');
+				}
+				if (App.logon.power('server.save')){
+					$('<span class="a"></span>').click(function(){
+						App.open({
+							title:'编辑服务器',
+							ctx:'base',
+							action:'serverEdit',
+							model: true,
+							params: {
+								projId: pg.params.id,
+								id: r.id
+							}
+						},function(rs){
+							//pg.callback(pg.params.id);
+							gd.load()
+						});
+					}).append('修改').appendTo(p);
+					p.append('&nbsp;&nbsp;&nbsp;');
+				}
+				if (App.logon.power('server.delete')){
+					$('<span class="a"></span>').click(function(){
+						$.post(App.ctx + '/server/delete.do', {
+							id: r.id
+						}, function(rs){
+							gd.load();
+						});
+					}).append('删除').appendTo(p);
+				}
+				return p;
+			}
+		}],
+		loader: {
+			url: App.ctx + '/server/list.do',
+			params: {
+				pageNo: 1, pageSize: 10,
+				projId: pg.params.id
+			},
+			autoLoad: true
+		},
+		pagerLength: 10
+	});
+	//server.save
+	if (!App.logon.power('server.save')){
+		pg.seek('add').hide();
+	}
+	pg.seek('add').click(function(){
+		App.open({
+			title:'增加服务器',
+			ctx:'base',
+			action:'serverEdit',
+			model: true,
+			params: {
+				projId: pg.params.id
+			}
+		},function(){
+			pg.callback(pg.params.id);
+			gd.load()
+		});
+	});
+	pg.seek('key').keydown(function(e) {
+		if (e.keyCode == 13)
+			gd.load({ key : $(this).val() });
+	});
+	
+	pg.seek('srchBtn').click(function(e) {
+		gd.load({ key : $(pg.seek('key')).val() });
+	});
+	
+	function adjust(){
+		var h = pg.parent().parent().height();
+		pg.height(h);
+		gd.parent().height(h-50);
+		gd.adjust();
+	}
+	$(window).resize(adjust);
+	adjust();
+});
+</script>
+<div class="head">
+	<button name="add">增加服务器</button>
+		&nbsp;&nbsp;&nbsp;&nbsp; 按IP地址：<input type="text" name="key" />
+	<button name="srchBtn">查找</button>
+</div>
+<div class="body">
+	<div class="grid" name="grid"></div>
+</div>

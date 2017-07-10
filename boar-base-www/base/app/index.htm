@@ -1,0 +1,96 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.base.appIndex.ui, pp = pg.params
+		, tabs = pg.find('.tabs');
+	
+	function init(o) {
+		var items = [{
+			code: 'infoPl', title: '基本信息',
+			render: function(p, c) {
+				App.show({
+					ctx: 'base',
+					action: 'appView',
+					params: c.params
+				}, $.noop, p);
+			}
+		},{
+			code: 'libPl', title: '依赖的库',
+// 			auth: 'app.lib.list',
+			render: function(p, c) {
+				App.show({
+					ctx: 'base',
+					action: 'appLibIndex',
+					params: { app: c.params }
+				}, $.noop, p);
+			}
+		}, {
+			code: 'instPl', title: '部署信息',
+// 			auth: 'app.inst.list',
+			render: function(p, c) {
+				App.show({
+					ctx: 'base',
+					action: 'appInstIndex',
+					params: { app: c.params }
+				}, $.noop, p);
+			}
+		}, {
+			code: 'filePl', title: '文件列表',
+// 			auth: 'app.file.list',
+			render: function(p, c) {
+				App.show({
+					ctx: 'base',
+					action: 'appFileIndex',
+					params: { app: c.params }
+				}, $.noop, p);
+			}
+		}];
+
+		var ex = App[App.code].appIndex;
+		if (ex && ex.tabs) {
+			for (var i=0; i<ex.tabs.length; i++) {
+				items.push(ex.tabs[i]);
+			}
+		}
+		items = $.map(items, function(a){
+			if (a.auth && !App.logon.power(a.auth)) {
+				if (a.el) {
+					a.el.hide();
+				}
+				return null;
+			}
+			return a;
+		});
+
+		tabs.mac('tabs', {
+			tabWidth: 80,
+			items: items,
+			params: o
+		}).selectFirst();
+		
+		function adjust(){
+			var h = pg.parent().height();
+			pg.height(h);
+			tabs.width(pg.width());
+			tabs.height(h - 8);
+			tabs.adjust();
+			h = tabs.children('.body').height() - 48;
+		}
+		$(window).resize(adjust);
+		adjust();
+	}
+
+	var w = mac.wait('Loading');
+	$.get(App.ctx + '/app/get.do', {
+		id: pp.id
+	}, function(rs) {
+		var ro = mac.eval(rs);
+		if (ro.success) {
+			init(ro.app);
+		} else {
+			mac.alert(ro.data, ro.params);
+		}
+		w.close();
+	});
+});
+</script>
+<div class="tabs"></div>

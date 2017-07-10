@@ -1,0 +1,112 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.base.projIndex.ui, pp = pg.params
+		, frm = pg.find('.form')
+		, tabs = pg.find('.tabs')
+		, infoPl = pg.find('.infoPl');
+	
+	function init(o){
+		setValues(o);
+		var items = [{
+			code: 'infoPl', title: '基本信息', el: infoPl
+		},{
+			code: 'serverPl', title: '服务器列表',
+			auth: 'server.list',
+			render: function(p,c){
+				App.show({
+					ctx: 'base',
+					action: 'serverList',
+					title: '服务器列表',
+					params: { id: pp.id }
+				}, $.noop, p);
+			}
+		},{
+			code: 'appPl', title: '应用列表',
+			auth: 'app.list',
+			render: function(p,c){
+				App.show({
+					ctx: 'base',
+					action: 'appList',
+					params: { id: pp.id }
+				}, $.noop, p);
+			}
+		}, {
+			code: 'projPl', title: '子系统列表',
+			auth: 'proj.list',
+			render: function(p,c){
+				App.show({
+					ctx: 'base',
+					action: 'projList',
+					params: { id: pp.id }
+				}, $.noop, p);
+			}
+		}, {
+			code: 'libPl', title: '库包列表',
+			auth: 'lib.list',
+			render: function(p,c){
+				App.show({
+					ctx: 'base',
+					action: 'libList',
+					params: { id: pp.id}
+				}, $.noop, p);
+			}
+		}];
+		
+		var ctx = App.ctx.substring(1),
+			ex = App[ctx].projIndex;
+		if (ex && ex.tabs) {
+			for (var i=0; i<ex.tabs.length; i++) {
+				items.push(ex.tabs[i]);
+			}
+		}
+		items = $.map(items, function(a){
+			if (a.auth && !App.logon.power(a.auth)) {
+				if (a.el) {
+					a.el.hide();
+				}
+				return null;
+			}
+			return a;
+		});
+	
+		tabs.mac('tabs', {
+			tabWidth: 80,
+			items: items,
+			params: { proj: pg.params }
+		}).selectFirst();
+		
+		function adjust(){
+			var h = pg.parent().height();
+			pg.height(h-30);
+			tabs.width(pg.width());
+			tabs.height(h-30);
+			tabs.adjust();
+		}
+		$(window).resize(adjust);
+		adjust();
+	}
+	
+	function setValues(o){
+		frm.seek('code').text(o.code);
+		frm.seek('name').text(o.name);
+		frm.seek('memo').text(o.memo);
+	}
+	
+	init(pg.params);
+});
+</script>
+<div class="tabs"></div>
+<div class="infoPl form">
+	<div class="item">
+		<span class="label">英文名：</span>
+		<span class="value" name="code"></span>
+	</div>
+	<div class="item">
+		<span class="label">中文名：</span>
+		<span class="value" name="name"></span>
+	</div>
+	<div class="item">
+		<span class="label">描述：</span>
+		<span class="memo" name="memo"></span>
+	</div>
+</div>

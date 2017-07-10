@@ -1,0 +1,188 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.serverApp.ui,
+	leftGd = pg.seek('leftGd'),
+	rightGd = pg.seek('rightGd');
+	leftGd.mac('grid',{
+		cols:[{
+			field: 'name', title : '服务器名称', width: 210,sort: true,
+			render: function(r, tr){
+				return $('<span class="a"></span>').click(function(){
+					App.open({
+						title:'服务器信息',
+						action:'serverEdit',
+						model: true,
+						params: r
+					},function(){
+						leftGd.load()
+					});
+				}).append(r.name);
+			}
+		},{
+			field: 'ip', title : 'IP地址', width: 90
+		},{
+			field: 'group', title : '组别', width: 60
+		},{
+			field: 'env', title : '环境', width: 40
+		},{
+			field: 'operation', title : '操作', width: 70,
+			render: function(r){
+				return $('<span class="a center">删除</span>').click(function(){
+					$.post(App.ctx + '/server/delete.do', {
+						id: r.id
+					},function(){
+						leftGd.load();
+						rightGd.loadData();
+					});
+				});
+			}
+		}],
+	 	loader: {
+			url: App.ctx + '/server/list.do',
+			params: { pageNo: 1, pageSize: 10},
+			autoLoad: true
+		},
+		pagerLength: 10,
+	    onRowClick: function(){
+			var tr = $(this), sr = leftGd.selected;
+			if (tr.hasClass('selected'))
+				return true;
+			if (sr)
+				sr.removeClass('selected');
+			sr = leftGd.selected = tr.addClass('selected');
+			pg.seek('deploy').attr("disabled",false);
+			pg.seek('deploy').removeClass("disAddbtn");
+			pg.seek('deploy').addClass("addBtn");
+			 rid = leftGd.data[sr.attr('name')].id;
+			rightGd.load({ serverId: rid, pageNo: 1 });
+		}
+	});
+	pg.seek('add').click(function(){
+		console.log(pg.params)
+	    App.open({
+			title:'服务器信息',
+			action:'serverEdit',
+			model: true,
+			params: {}
+		},function(){
+			leftGd.load()
+		}); 
+	});
+	pg.seek('Sevkey1').keydown(function(e) {
+		if (e.keyCode == 13){
+			leftGd.load({ key : $(this).val() });
+			rightGd.loadData();	
+		}
+	});
+	rightGd.mac('grid',{
+		cols:[{
+			field: 'name', title : '应用名称', width: 180,sort: true,
+			render: function(r){
+				return (r.app.name)
+			}
+		},{
+			field: 'code', title : '应用代码', width: 120, sort: true,
+			render: function(r){
+				return (r.app.code)
+			}
+		},{
+			field: 'version', title : '版本号', width: 120, sort: true,
+			render: function(r){
+				return (r.app.version)
+			}
+		},{
+			field: 'status', title : '状态', width: 40,
+			render: function(r){
+				if(r.status==1){
+					return $('<span>运行</span>')
+				}else if(r.status==0){
+					return $('<span>未运行</span>')
+				}
+			}
+		},{
+			field: 'operation', title : '操作', width: 60,
+			render: function(r){
+				if(r.status==1){
+					return $('<span class="a">放弃部署</span>').click(function(){
+						$.post(App.ctx + '/app/delete.do', {
+							id: r.id
+						},function(){
+							rightGd.load()
+						});
+					});
+				}else if(r.status==0){
+					return $('<span class="a">部署</span>').click(function(){
+						$.post(App.ctx + '/app/delete.do', {
+							id: r.id
+						},function(){
+							rightGd.load()
+						});
+					});
+				}
+			}
+		}],
+	 	loader: {
+			url: App.ctx + '/server/listApps.do',
+			params: { pageNo: 1, pageSize: 10 },
+			autoLoad: false
+		},
+		pagerLength: 10
+	});
+	pg.seek('deploy').click(function(){
+		var sr = leftGd.selected;
+		var rid = leftGd.data[sr.attr('name')].id;
+		rightGd.load({ id: rid, pageNo: 1 });
+		App.open({
+			title: '服务器列表',
+			ctx: 'base',
+			action:'serverPicker',
+			model: true,
+			params: { id: rid, multi: 1}
+		},function(s){
+			if (!s || !s.length){
+				return;
+			}
+			var a = $.map(s,function(n){
+				return n.id;
+			});
+			var ss = s.length,c=[];
+			for(var i=0;i<ss;i++){
+				dd=s[""+i+""].id;
+				c.push(dd)
+			};
+			$.post(App.ctx + '/app/inst/save.do' ,{
+				serverIds:rid,
+				appIds:c.join(',')
+			},function(rs){
+				rightGd.load();
+			})
+		}); 
+	});
+	pg.seek('Sevkey2').keydown(function(e) {
+		if (e.keyCode == 13)
+			rightGd.load({ key : $(this).val() });
+	});
+})
+</script>
+<div class="main">
+	<div class="fl left">
+		<div class="head">
+			<button class="fl addBtn" name="add">添加</button>
+			<input name="Sevkey1" class="fr" placeholder="查找" />
+		</div>
+		<div class="clear"></div>
+		<div class="body">
+			<div class="grid" name="leftGd"></div>
+		</div>
+	</div>
+	<div class="fl right">
+		<div class="head">
+			<button class="fl disAddbtn" name="deploy" disabled="disabled">部署</button>
+			<input name="Sevkey2" class="fr" placeholder="查找" />
+		</div>
+		<div class="clear"></div>
+		<div class="body">
+			<div class="grid" name="rightGd"></div>
+		</div>
+	</div>
+</div>

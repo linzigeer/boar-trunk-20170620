@@ -1,0 +1,50 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.base.libByMeIndex.ui, pm = pg.params
+	, hd = pg.children('.head'), bd = pg.children('.body')
+	, gd = pg.seek('grid');
+	
+	gd.mac('grid', {
+		cols : [{
+			field: 'objCode1', title : '组件编号', width: 240
+		},{
+			field: 'objName1', title : '组件名称', width: 240
+		},{
+			field: 'objVer1', title : '组件版本', width: 180
+		},{
+			field: 'async', title : '异步', width: 60,
+			render: function(r){
+				return r.async? '是':'否';
+			}
+		},{
+			field: 'way', title : '方式', width: 60
+		},{
+			field: 'memo', title : '备注', width: 240
+		}],
+// 		loader: {
+// 			url: App.ctx + '/lib/listLibBy.do',
+// 			params: {
+// 				pageNo: 1, pageSize: 50,
+// 				id: pm.lib.id
+// 			},
+// 			autoLoad: true
+// 		},
+// 		pagerLength: 10
+	});
+	
+	function adjust(){
+		var h = pg.parent().height();
+		bd.height(h - hd.height() - 44);
+		gd.adjust();
+	}
+	$(window).resize(adjust);
+	adjust();
+	
+});
+</script>
+
+<div class="head">当前库（其下组件或服务）依赖以下组件或服务</div>
+<div class="clear"></div>
+<div class="body">
+	<div class="grid" name="grid"></div>
+</div>

@@ -1,0 +1,135 @@
+<script type="text/javascript">
+	$(function() {
+		var pg = App.base.libOnMeIndex.ui, 
+		    pm = pg.params, 
+		    hd = pg.children('.head'), 
+		    bd = pg.children('.body'),
+		    appPl = pg.children('.appPl'), 
+		    soaPl = pg.children('.soaPl'),
+	        appGd = appPl.seek('appGd'), 
+	        soaGd = soaPl.seek('soaGd');
+
+		appGd.mac('grid', {
+			cols : [ {
+				field : 'code',
+				title : '服务编号',
+				width : 240,
+			//render: function(r){
+			//	return r.obj0.code;
+			//}
+			}, {
+				field : 'name',
+				title : '服务名称',
+				width : 240,
+			//render: function(r){
+			//	return r.obj0.name;
+			//}
+			}, {
+				field : 'version',
+				title : '服务版本',
+				width : 180,
+			//render: function(r){
+			//	return r.obj0.ver;
+			//}
+			}, {
+				field : 'memo',
+				title : '备注',
+				width : 240
+			} ],
+			loader : {
+				url : App.ctx + '/lib/listApps.do',
+				params : {
+					pageNo : 1,
+					pageSize : 50,
+					id : pm.lib.id
+				},
+				autoLoad : true
+			},
+			pagerLength : 10
+		});
+		
+		soaGd.mac('grid', {
+			cols : [{
+				field: 'objCode0', title : '组件编号', width: 240,
+			},{
+				field: 'objName0', title : '组件名称', width: 240,
+			},{
+				field: 'objVer0', title : '组件版本', width: 180,
+			},{
+				field: 'async', title : '异步', width: 60,
+				render: function(r){
+					return r.async? '是':'否';
+				}
+			},{
+				field: 'way', title : '方式', width: 60
+			},{
+				field: 'memo', title : '备注', width: 240
+			}],
+			loader: {
+				url: App.ctx + '/lib/listSoa.do',
+				params: {
+					pageNo: 1, pageSize: 50,
+					id: pm.lib.id
+				},
+				autoLoad: true
+			},
+			pagerLength: 10
+		});
+		
+		function gdDisplay(){
+			var appBtnFlag = 0 , soaBtnFlag = 0;
+			$(".appBtn").click(function(){
+				$('#appBd').toggle();
+				if(appBtnFlag==1){
+					$('.appBtn').text("展示");
+					appBtnFlag = 0;
+				}else{
+					$('.appBtn').text("隐藏");
+					appBtnFlag = 1;
+				}
+			});
+			$(".soaBtn").click(function(){
+				$('#soaBd').toggle();
+				if(soaBtnFlag==1){
+					$('.soaBtn').text("展示");
+					soaBtnFlag = 0;
+				}else{
+					$('.soaBtn').text("隐藏");
+					soaBtnFlag = 1;
+				}
+			});
+		}
+
+		function adjust() {
+			var h = pg.parent().height();
+			bd.height(h - hd.height() - 44);
+			appGd.adjust();
+		}
+		$(window).resize(adjust);
+		adjust();
+		gdDisplay();
+
+	});
+</script>
+
+<div class="appPl">
+	<div class="head">
+		当前库被以下服务依赖
+		<button class="appBtn">展示</button>
+	</div>
+	<div class="clear"></div>
+	<div class="body" id="appBd" style="height: 200px; display:none">
+		<div class="grid" name="appGd"></div>
+	</div>
+</div>
+
+<div class="soaPl">
+	<div class="head">
+		当前库被以下组件依赖
+		<button class="soaBtn">展示</button>
+	</div>
+	<div class="clear"></div>
+	<div class="body" id="soaBd" style="height: 200px; display:none">
+		<div class="grid" name="soaGd"></div>
+	</div>
+</div>

@@ -1,0 +1,77 @@
+<script src="/js/jquery/md5.js" type="text/javascript"></script>
+<script type="text/javascript">
+$(function(){
+	var pg = App.setpwd.ui;
+	var frm = {
+		pwd1: pg.seek('pwd1'),
+		pwd2: pg.seek('pwd2')
+	};
+	function getValues(){
+		return {
+			pwd1: frm.pwd1.val(),
+			pwd2: frm.pwd2.val()
+		};
+	}
+	function valid(p){
+		pg.find('.msg').html('');
+		if(!p.pwd1){
+			frm.pwd1.next().html('密码能为空');
+			return false;
+		}
+		if(!p.pwd2){
+			frm.pwd2.next().html('请再输入一次');
+			return false;
+		}
+		if(p.pwd1 != p.pwd2){
+			frm.pwd2.next().html('两次输入的密码不一致');
+			return false;
+		}
+// 		if(/\w+(\.\w+)*/.test(p.code)){
+// 			frm.code.next().html('公司名不符合要求');
+//  			return false;
+// 		}
+		return true;
+	}
+	pg.seek('ok').click(function(){
+		var pms = getValues();
+		if(!valid(pms))
+			return;
+		$.post(App.ctx + '/sys/user/resetPwd.do', {
+			id: pg.params.id,
+			password: $.md5(pms.pwd1)
+		}, function(rs){
+			var ro = mac.eval(rs);
+			if (ro.success) {
+				//pg.callback(ro.data);
+				pg.close();
+			} else {
+				pg.seek('msg').html(mac.msg(ro.data, ro.params));
+			}
+		});
+		return false;
+	});
+	pg.seek('cancel').click(function(){
+		pg.close();
+	});
+});
+</script>
+<div class="form">
+	<input type="hidden" name="userId" />
+	<div class="item">
+		<span class="label">新的密码</span> <input type="password" name="pwd1" />
+		<span class="msg">*</span>
+	</div>
+	<div class="item">
+		<span class="label">密码确认</span> <input type="password" name="pwd2" />
+		<span class="msg">*</span>
+	</div>
+	<div class="item">
+		<span class="label">&nbsp;</span>
+		<div name="msg"></div>
+		<div class="clear"></div>
+	</div>
+	<div class="bottom">
+		<button name="ok">确定</button>
+		<button name="cancel">取消</button>
+	</div>
+</div>

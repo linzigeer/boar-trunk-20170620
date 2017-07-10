@@ -1,0 +1,74 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.base.dirPicker.ui
+		, tree = pg.find('.tree');
+	var frm = {
+		ok: pg.seek('ok'),
+		cancel: pg.seek('cancel')
+	}
+	tree.mac('dtree', {
+		treeConfig : {
+			children: [{
+				key: 'root',
+				title: '我的项目',
+				isLazy: true,
+				isFolder: true,
+				icon: 'root.png'
+			}],
+			imagePath: App.ctx + '/css/img/'
+		},
+		loader : {
+			url : App.ctx + '/dir/list.do',
+			autoLoad : true
+		},
+		onActivate : function(dt) {
+			var t = dt.data.type, pm = pg.params || {}, aa = pm.allow;
+			if (aa && $.inArray(t, aa) < 0) {
+				frm.ok.attr('disabled', 1);
+				frm.ok.attr('style','background: #888 none repeat scroll 0 0;');
+				if ((pm.allow[0]=='root')&&(t=='undefined')){//undefined
+					frm.ok.removeAttr('disabled');
+					frm.ok.attr('style','background: #2b7bbd none repeat scroll 0 0;');
+				}
+			} else {
+				frm.ok.removeAttr('disabled');
+				frm.ok.attr('style','background: #2b7bbd none repeat scroll 0 0;');
+			}
+			if(pm){
+				if(dt.data.id==pm.parent){//不能移动到相同目录
+					frm.ok.attr('disabled', 1);
+					frm.ok.attr('style','background: #888 none repeat scroll 0 0;');
+				}
+				if(dt.data.id==pm.id){//不能移动到自身下
+					frm.ok.attr('disabled', 1);
+					frm.ok.attr('style','background: #888 none repeat scroll 0 0;');
+				}
+			}
+		},
+		onLoadSubTree: function(dd){
+			$.each(dd, function(i, d){
+				d.icon = Cache.base.dir.icons[d.type];
+			});
+		}
+	}).getNode('root').expand();
+	frm.ok.click(function() {
+		var d = tree.dynatree("getActiveNode").data;
+		if (d.type == 3 && !confirm('是否要覆盖这个组件？')) {
+			return;
+		}
+		pg.callback(d);
+		pg.close();
+	});
+	frm.cancel.click(function() {
+		pg.close();
+	});
+});
+</script>
+<div class="tree"></div>
+<div class="form">
+	<div class="bottom">
+		<button name="ok" disabled>确定</button>
+		&nbsp;&nbsp;&nbsp;&nbsp;
+		<button name="cancel">取消</button>
+	</div>
+</div>

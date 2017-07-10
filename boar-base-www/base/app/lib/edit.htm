@@ -1,0 +1,96 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.base.appLibEdit.ui;
+	var frm = {
+		path: pg.seek('path'),
+		port: pg.seek('port'),
+		user: pg.seek('user')
+	};
+	function getValues(){
+		return {
+			id: pg.params.id,
+			path: frm.path.val(),
+			port: frm.port.val(),
+			user: frm.user.val()
+		};
+	}
+	function setValues(o, pom){
+		frm.path.val(o.path);
+		frm.port.val(o.port);
+		frm.user.val(o.user);
+	}
+	function validate(p){
+		pg.find('.msg').html('');
+		var x = App.validate, b;
+		b = x('app.inst.path', frm.path, p.path) & x('app.inst.user', frm.user, p.user);
+		return b;
+	}
+	 $("input").blur(function(){
+		var pms = getValues();
+		if(!validate(pms))
+			return;
+	});
+	
+	pg.seek('ok').click(function(){
+		var pms = getValues();
+		if(!validate(pms))
+			return;
+		$.post(App.ctx + '/app/inst/save.do', pms, function(rs){
+			var ro = mac.eval(rs);
+			if (ro.success) {
+				pg.callback(ro.data);//更新树	
+				pg.close();
+			} else {
+				pg.seek('msg').html(mac.msg(ro.data, ro.params));
+			}
+		});
+		return false;
+	});
+	setValues(pg.params || {});
+	
+	pg.seek('close').click(function(){
+		pg.close()
+	})
+	
+	if (pg.params.id) {
+		frm.code.attr('readonly', true);
+		var w = mac.wait('Loading');
+		$.get(App.ctx + '/app/inst/get.do', {
+			id: pg.params.id
+		}, function(rs) {
+			var ro = mac.eval(rs);
+			if (ro.success) {
+				setValues(ro.app, atob(ro.pom));
+			} else {
+				pg.seek('msg').html(mac.msg(ro.data, ro.params));
+			}
+			w.close();
+		});
+	} else {
+		setValues(pg.params, '');
+	}
+});
+</script>
+<div class="left">
+	<div class="form">
+		<div class="item">
+			<span class="label">根路径：</span> <input type="text" name="path"
+				placeholder="应用安装根路径" /> <span class="msg">*</span>
+			<div class="clear"></div>
+		</div>
+		<div class="item">
+			<span class="label">用户：</span> <input type="text" name="user"
+				placeholder="应用的所属用户" /> <span class="msg">*</span>
+			<div class="clear"></div>
+		</div>
+		<div class="item">
+			<span class="label">端口号：</span> <input type="text" name="user"
+				placeholder="应用的所属用户" /> <span class="msg"></span>
+			<div class="clear"></div>
+		</div>
+		<div class="bottom">
+			<button name="ok" class="addBtn">确定</button>
+			<button name="close" class="addBtn">取消</button>
+		</div>
+	</div>
+</div>

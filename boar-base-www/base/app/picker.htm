@@ -1,0 +1,140 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.base.appPicker.ui
+		, pp = pg.params, pb = pg.children('.body')
+		, hd = pb.children('.head')
+		, bd = pb.children('.body')
+		, gd = bd.children('.grid')
+		, ft = pb.children('.foot');
+	
+	var tempArr = new Array();
+	var selectArr = new Array();
+	var tempObj = new Object();
+	var frm = {
+		env: hd.seek('env'),
+		all: ft.seek('all'),
+		key: hd.seek('keys'), 
+		ok: ft.seek('ok'),
+		cancel: ft.seek('cancel')
+	}; 
+	function toggleSelect(me, check){
+		var k=me.attr('value');
+		if(check==1){
+			me.prop('checked','checked');
+			tempObj[k]=gd.data[k];
+		}else{
+			me.attr('checked',false);
+			delete tempObj[k];
+		}
+		
+		if(me.is(':checked')){
+			tempObj[k]=gd.data[k];
+			//添加被选中元素到对象
+		}else{
+			delete tempObj[k];
+			//删除被取消元素从数组中
+		}
+	}
+	gd.mac('grid', {
+		key: 'id',
+		cols : [{
+			field: 'id', width: 24,
+			title: pp.multi?'<input type="checkbox" name="all"/>':'',
+			render : function(r) {
+				if (pp.multi) {
+					return '<input type="checkbox" name="keys" value="' + r.id + '"/>';
+				} else {
+					return '<input type="radio" name="keys" value="' + r.id + '"/>';
+				}
+			}
+		},{
+			field: 'code', title : '英文编号', width: 140
+		},{
+			field: 'ver', title : '版本号', width: 120
+		},{
+			field: 'name', title : '库包名称', width: 230
+		},{
+			field: 'status', title : '状态', width: 50,
+		},{
+			field: 'memo', title : '备忘录', width: 220
+		}],
+		 loader: {
+// 			url: pp.url || App.ctx + '/app/listLibsNot.do',
+			url: pp.url || App.ctx + '/app/list.do',
+			params: $.extend(pp.pms || {}, { pageNo: 1, pageSize: 10 }), 
+			autoLoad: true 
+		},
+		afterLoad: function(dd, po, me){
+			pg.seek('all').attr('checked',false);
+			var checkList = pg.seek('keys');
+			for(var j=0;j<checkList.length;j++){
+				if(tempObj[$(checkList[j]).attr('value')]){
+					$(checkList[j]).attr('checked','checked');
+				}
+			}
+			pg.seek("keys").click(function(){
+				toggleSelect($(this), 1)
+			});
+		},
+
+		pagerLength: 10,
+		onRowClick: function(){
+			
+			var ec = $(this), k = ec.attr('name');
+			if(gd.selected && ec.hasClass('selected')){
+				delete gd.selected[k];
+				ec.addClass('selected');
+			}else{
+				gd.selected = gd.selected || {};
+				gd.selected[k] = gd.data[k];
+				ec.addClass('selected');
+			}
+		},
+		pagerLength: 10
+	});
+	gd.seek('all').click(function(){
+		if(pg.seek('all').is(':checked')){
+			gd.seek('keys').each(function(){
+				toggleSelect($(this),1);
+			});
+		}else{
+			gd.seek('keys').each(function(){
+				toggleSelect($(this), 0);
+			});
+		}
+	});
+	frm.ok.click(function() {
+		for(var i in tempObj){
+			tempArr.push(tempObj[i]);
+		}
+		pg.callback(tempArr);
+		pg.close();
+	}); 
+	frm.cancel.click(function() {
+		pg.close();
+	}); 
+	pg.seek('key').keydown(function(e) {
+		if (e.keyCode == 13)
+			gd.load({ key : $(this).val() });
+	}); 
+	function adjust(){
+		/* var p = pg.parent(), h = p.height();
+		pg.height(h); */
+		/* pg.seek("body").height(h-250); */
+		gd.adjust();
+	}
+	$(window).resize(adjust);
+	adjust();
+});
+</script>
+<div class="head">
+	<span class="label">查询应用：</span>
+	<input name="key" placeholder="查找" />
+</div>
+<div class="body">
+	<div class="grid"></div>
+</div>
+<div class="foot">
+	<button name="ok">确定</button>
+	<button name="cancel">取消</button>
+</div>

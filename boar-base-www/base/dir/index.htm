@@ -1,0 +1,650 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.base.dirIndex.ui, pp = pg.params
+		, id = App.getHashParam('id')
+		, dirCM = pg.children('.ctxMenu')
+		, infoPl = pg.children('.infoPl')
+		, tree = pg.children('.tree')
+		, oper = { id: 0, act: 'copy' }
+		, _node;
+	
+	var tNode;//剪切时标记节点
+	var menus = [{
+		title: '添加公司',
+		action : 'addCompany',
+		no: 0,
+		icon: 'icon-newwin'
+	},{
+		title : '添加部门',
+		action : 'addDept',
+		no: 1,
+		icon: 'icon-newwin'
+	},{
+		title: '新建目录',
+		action : 'addDir',
+		no: 2,
+		icon: 'icon-newwin'
+	},{
+		title : '新建系统',
+		action : 'addProj',
+		no: 3,
+		icon: 'icon-newwin'
+	},{
+		title : '新建应用',
+		action : 'addApp',
+		no: 4,
+		icon: 'icon-newwin'
+	},{
+		title : '新建库',
+		action : 'addLib',
+		no: 5,
+		icon: 'icon-newwin'
+	},{
+		title : '编辑',
+		action : 'edit',
+		no: 10,
+		icon: 'icon-newwin'
+	},{
+		title : '复制',
+		action : 'copy',
+		no: 11,
+		icon: 'icon-newwin'
+	},{
+		title : '移动',
+		action : 'move',
+		no: 12,
+		icon: 'icon-newwin'
+	},{
+		title : '剪切',
+		action : 'cut',
+		no: 13,
+		icon: 'icon-newwin'
+	},{
+		title : '粘贴',
+		action : 'paste',
+		no: 14,
+		icon: 'icon-newwin'
+	},{
+		title : '删除',
+		action : 'delete',
+		no: 15,
+		icon: 'icon-newwin'
+	}];
+	if (pp.menus) {
+// 		menus.concat(pp.menus);
+		for(var i in pp.menus) {
+			menus.push(pp.menus[i]);
+		}
+	}
+	menus.sort(function(x, y){
+		return x.no > y.no? 1:-1;
+	});
+	dirCM.mac('menu', {
+		children: menus
+	});
+	
+	function addNode(d, k){
+		if (d) {
+			d.icon = Cache.base.dir.icons[d.type];
+			tree.addNode(d).activate();
+		} else {
+			tree.onActivate(tree.getNode(k));
+		}
+	}
+	function updNode(d, k){
+		if(d){
+			d.icon = Cache.base.dir.icons[d.type];
+			var dt = tree.updateNode(d);
+			tree.onActivate(dt);
+		} else {
+			tree.onActivate(tree.getNode(k));
+		}
+	}
+	function cancelEdit(d, k) {
+		
+	}
+	function setIcon(d) {
+		if (!d) {
+			return;
+		}
+		$.each(d, function(i, a){
+			a.icon = Cache.base.dir.icons[a.type];
+			setIcon(a.children);
+		});
+	}
+	
+	var acts = {};
+	acts[C.DIR] = function(d, p) {
+		App.show({
+			ctx: 'base',
+			action: 'dirView',
+			params: d
+		}, $.noop, p);
+	}
+	acts[C.PROJ] = function(d, p) {
+		App.show({
+			ctx: 'base',
+			action: 'projIndex',
+			params: d
+		}, function(s){
+			var dt = tree.getNode(s); //被选中的当前节点ID
+			tree.loadSubTree(dt); //重新载入这个节点下的子树
+		}, p);
+	}
+	acts[C.APP] = function(d, p) {
+		App.show({
+			ctx: 'base',
+			action: 'appIndex',
+			params: d
+		}, $.noop, p);
+	}
+	acts[C.LIB] = function(d, p) {
+		App.show({
+			ctx: 'base',
+			action: 'libIndex',
+			params: d
+		}, $.noop, p);
+	}
+	acts[C.CORP] = function(d, p) {
+		App.show({
+			ctx: 'base',
+			action: 'corpIndex',
+			params: d
+		}, $.noop, p);
+	}
+	acts[C.DEPT] = function(d, p) {
+		App.show({
+			ctx: 'base',
+			action: 'deptView',
+			params: d
+		}, function(s){
+			var dt = tree.getNode(s); //被选中的当前节点ID
+			tree.loadSubTree(dt); //重新载入这个节点下的子树
+		}, p);
+	}
+	$.extend(acts, pp.acts);
+
+	tree.mac('dtree', {
+		treeConfig: {
+			children: [{
+				key: 'root',
+				title: '我的项目',
+				isLazy: true,
+				isFolder: true,
+				icon: 'root.png'
+			}],
+			imagePath: App.ctx + '/css/img/'
+		},
+		ctxMenu: dirCM,
+		menuOffset: { x: 6, y: 0 },
+		loader: {
+			url: App.ctx + '/dir/list.do',
+			//params: { types: Cache[App.code].dir.types },
+			autoLoad: true
+		},
+		onActivate: function(dt) {
+			var d = dt.data, act = acts[d.type];
+			if (act) {
+				act(d, infoPl);
+			}
+		},
+		onCtxMenu: function(el){
+			var n = $.ui.dynatree.getNode(el), d = n.data;
+			var cMove='move';
+			var cPaste='';
+			var cCopy='copy';
+			var cSave='save';
+			var cEdit='edit';
+			var cDelete='delete';
+			var cCut='cut';
+			
+			var cAddCompany='addCompany';
+			var cAddDept='addDept';
+			var cAddProj='addProj';
+			var cAddDir='addDir';
+			var cAddApp='addApp';
+			var cAddLib='addLib';
+			var cAddSvc='addSvc';
+			var cAddFace='addFace';
+			var cDeployPlan='planIndex';
+			
+			if(!App.logon.power('corp.save')){ cAddCompany='';};
+			if(!App.logon.power('dept.save')){ cAddDept='';};
+			if(!App.logon.power('proj.save')){ cAddProj='';};
+			if(!App.logon.power('dir.save')){ cAddDir='';};
+			if(!App.logon.power('app.save')){ cAddApp='';};
+			if(!App.logon.power('lib.save')){ cAddLib='';};
+			if(!App.logon.power('svc.save')){ cAddSvc='';};
+			if(!App.logon.power('face.save')){ cAddFace='';};
+			//if(App.logon.power('deploy.CIT')&&){ cDeployPlan='';};
+			var rights='';
+			var pArr=[];
+			
+			switch (d.type) {
+			case C.CORP:
+				dirCM.disableItems('*', 'hidden');
+				rights= cAddProj+','+cAddDir+','+cAddDept+','+cAddCompany;
+				pArr.push('proj');pArr.push('dir');pArr.push('corp');pArr.push('dept');
+				for (var i=0; i<pArr.length; i++){
+					if(oper.type == pArr[i]){cPaste='paste'};
+				}
+				if(App.logon.power('corp.save')){
+					rights+=',' + cMove + ',' + cPaste + ','+ cCopy+ ','+ cEdit+ ','+ cCut;
+				}
+				if(App.logon.power('corp.delete')){
+					rights+=',' + cDelete;
+				}
+				dirCM.enableItems(rights,'hidden');
+			  //dirCM.enableItems('move,paste,copy,paste,edit,delete,addProj,addDir', 'hidden');
+				break;
+			case C.DEPT:
+				dirCM.disableItems('*', 'hidden');
+				rights= cAddProj+','+cAddDir+','+cAddDept;
+				pArr.push('proj');pArr.push('dir');pArr.push('dept');
+				for (var i=0; i<pArr.length; i++){
+					if(oper.type == pArr[i]){cPaste='paste'};
+				}
+				if(App.logon.power('dept.save')){
+					rights+=',' + cMove + ',' + cPaste + ','+ cCopy+ ','+ cEdit+ ','+ cCut;
+				}
+				if(App.logon.power('dept.delete')){
+					rights+=',' + cDelete;
+				}
+				dirCM.enableItems(rights,'hidden');
+				//dirCM.enableItems('move,paste,copy,edit,delete,addDept,addProj,addDir', 'hidden');
+				break;
+			case C.DIR:
+				dirCM.disableItems('*', 'hidden');
+				rights= cAddProj+','+cAddDir+','+cAddLib+','+cAddApp;
+				pArr.push('proj');pArr.push('dir');pArr.push('lib');pArr.push('app');
+				for (var i=0; i<pArr.length; i++){
+					if(oper.type == pArr[i]){cPaste='paste'};
+				}
+				if(App.logon.power('dir.save')){
+					rights+=',' + cMove + ',' + cPaste + ','+ cCopy+ ','+ cEdit+ ','+ cCut;
+				}
+				if(App.logon.power('dir.delete')){
+					rights+=',' + cDelete;
+				}
+				dirCM.enableItems(rights,'hidden');
+				//dirCM.enableItems('move,paste,copy,edit,addProj,addApp,addLib,addDir,delete', 'hidden');
+				break;
+			case C.PROJ:
+				dirCM.disableItems('*', 'hidden');
+				rights= cAddSvc+','+cAddFace+','+cAddProj+','+cAddApp+','+cAddDir+','+cAddLib+','+cDeployPlan;
+				pArr.push('svc');pArr.push('face');pArr.push('proj');pArr.push('app');pArr.push('dir');pArr.push('lib');
+				for (var i=0; i<pArr.length; i++){
+					if(oper.type == pArr[i]){cPaste='paste'};
+				}
+				if(App.logon.power('proj.save')){
+					rights+=',' + cMove + ',' + cPaste + ','+ cCopy+ ','+ cEdit+ ','+ cCut;
+				}
+				if(App.logon.power('proj.delete')){
+					rights+=',' + cDelete;
+				}
+				dirCM.enableItems(rights,'hidden');
+				break;
+			case C.APP:
+				dirCM.disableItems('*', 'hidden');
+				rights= cAddSvc+','+cAddFace;
+				pArr.push('svc');pArr.push('face');
+				for (var i=0; i<pArr.length; i++){
+					if(oper.type == pArr[i]){cPaste='paste'};
+				}
+				if(App.logon.power('app.save')){
+					rights+=',' + cMove + ',' + cPaste + ','+ cCopy+ ','+ cEdit+ ','+ cCut;
+				}
+				if(App.logon.power('app.delete')){
+					rights+=',' + cDelete;
+				}
+				dirCM.enableItems(rights,'hidden');
+				//dirCM.enableItems('move,paste,copy,edit,addSvc,addFace,delete', 'hidden');
+				break;
+			case C.LIB:
+				dirCM.disableItems('*', 'hidden');
+				rights= cAddSvc+','+cAddFace;
+				pArr.push('svc');pArr.push('face');
+				for (var i=0; i<pArr.length; i++){
+					if(oper.type == pArr[i]){cPaste='paste'};
+				}
+				if(App.logon.power('lib.save')){
+					rights+=',' + cMove + ',' + cPaste + ','+ cCopy+ ','+ cEdit+ ','+ cCut;
+				}
+				if(App.logon.power('lib.delete')){
+					rights+=',' + cDelete;
+				}
+				dirCM.enableItems(rights,'hidden');
+				//dirCM.enableItems('move,paste,copy,edit,addSvc,addFace,delete', 'hidden');
+				break;
+			case C.SVC:
+				dirCM.disableItems('*', 'hidden');
+				rights='';
+				if(App.logon.power('svc.save')){
+					rights+=',' + cMove + ',' + cPaste + ','+ cCopy+ ','+ cEdit+ ','+ cCut;
+				}
+				if(App.logon.power('svc.delete')){
+					rights+=',' + cDelete;
+				}
+				dirCM.enableItems(rights,'hidden');
+				dirCM.enableItems('move,paste,edit,copy,delete', 'hidden');
+				break;
+			case C.FACE :
+				dirCM.disableItems('*', 'hidden');
+				rights='';
+				if(App.logon.power('face.save')){
+					rights+=',' + cMove + ',' + cPaste + ','+ cCopy+ ','+ cEdit+ ','+ cCut;
+				}
+				if(App.logon.power('face.delete')){
+					rights+=',' + cDelete;
+				}
+				dirCM.enableItems(rights,'hidden');
+				//dirCM.enableItems('move,paste,edit,copy,delete', 'hidden');
+				break;
+			case C.COM  : 
+				dirCM.disableItems('*', 'hidden');
+				rights='';
+				if(App.logon.power('com.save')){
+					rights+=',' + cMove + ',' + cPaste + ','+ cCopy+ ','+ cEdit+ ','+ cCut;
+				}
+				if(App.logon.power('com.delete')){
+					rights+=',' + cDelete;
+				}
+				dirCM.enableItems(rights,'hidden');
+				//dirCM.enableItems('move,paste,addSvc,addFace,copy,delete', 'hidden');
+				break;
+			default://根目录
+				dirCM.disableItems('*', 'hidden');
+				rights='addDept,addProj,addApp,addLib,addDir';
+				if(App.logon.deptId=='root'){
+					if(App.logon.power('corp.save')){
+						rights+=',' + cAddCompany ;
+					}
+					dirCM.enableItems(rights , 'hidden');
+				} else {
+					mac.alert('只有超级管理员可以操作根目录');
+				}
+			}
+		},
+		onCtxMIClick: {
+			addCompany: function(tree, dt, el, pos){
+				App.show({
+					ctx: 'base',
+					action: 'corpEdit',
+					title: '添加公司',
+					params: { parent: dt.data.key, status: 0 }
+				}, addNode, infoPl);
+			},
+			addDept: function(tree, dt, el, pos){
+				App.show({
+					ctx: 'base',
+					action: 'deptEdit',
+					title: '添加部门',
+					params: { parent: dt.data.key, status: 0 }
+				}, addNode, infoPl);
+			},
+			addDir: function(tree, dt, el, pos){
+				App.show({
+					ctx: 'base',
+					action: 'dirEdit',
+					title: '添加目录',
+					params: { parent: dt.data.key }
+				}, addNode, infoPl);
+			},
+			addProj: function(tree, dt, el, pos){
+				App.show({
+					ctx: 'base',
+					action: 'projEdit',
+					title: '添加系统',
+					params: { parent: dt.data.key, status: 0 }
+				}, addNode, infoPl);
+			},
+			addApp: function(tree, dt, el, pos){
+				App.show({
+					ctx: 'base',
+					action: 'appEdit',
+					title: '添加应用',
+					params: { parent: dt.data.key, status: 0 }
+				}, addNode, infoPl);
+			},
+			addSvc: function(tree, dt, el, pos){
+				App.show({
+					ctx: 'soagov',
+					action: 'svcEdit',
+					title: '添加服务',
+					params: { parent: dt.data.key, status: 0 }
+				}, addNode, infoPl);
+			},
+			addCom: function(tree, dt, el, pos){
+				App.show({
+					action: 'comEdit',
+					title: '添加组件',
+					params: { parent: dt.data.key, status: 0 }
+				}, addNode, infoPl);
+			},
+			addFace: function(tree, dt, el, pos){
+				App.show({
+					ctx: 'soagov',
+					action: 'faceEdit',
+					title: '添加接口',
+					params: { parent: dt.data.key, status: 0 }
+				}, addNode, infoPl);
+			},
+			addLib: function(tree, dt, el, pos){
+				App.show({
+					ctx: 'base',
+					action: 'libEdit',
+					title: '添加库',
+					params: { parent: dt.data.key, status: 0 }
+				}, addNode, infoPl);
+			},
+			planIndex: function(tree, dt, el, pos){
+				App.show({
+					ctx: 'deploy',
+					action: 'planIndex',
+					title: '部署计划',
+					params: { parent: dt.data.key, status: 0, id:dt.data.id }
+				}, updNode, infoPl);
+			},
+			copy: function(tree, dt, el, pos){
+				if(tNode){
+					tNode.removeAttr('style');
+					tNode.find('.dynatree-title').removeAttr('style');
+				}
+				oper.id = dt.data.id;
+				oper.act = 'copy';
+				oper.type = Cache.base.dir.types[dt.data.type];
+			},
+			move: function(tree, dt, el, pos){
+				alert(dt.data.type);
+				alert(Cache.base.dir.opers[0]);
+// 				switch (Cache.base.dir.types[dt.data.type]) {
+				App.open({
+					action: 'dirPicker',
+					title: '选择移动位置',
+					params:{
+						id: dt.data.id,
+						parent: dt.data.parent,
+						type: Cache.base.dir.types[dt.data.type],
+						allow: al
+					},
+					model: true
+				}, function(d){
+					$.post(App.ctx + '/dir/move.do', {
+						id: dt.data.id,
+						parent : d.key
+					}, function(rs){
+						var a = dt.data;
+						tree.deleteNode(a.key);
+						a.parent = d.key;
+						tree.addNode(a).activate();
+					});
+				});
+			},
+			cut: function(tree, dt, el, pos){
+				if(tNode){
+					tNode.removeAttr('style');
+					tNode.find('.dynatree-title').removeAttr('style');
+				}
+				tNode=el;
+				el.attr('style','background:#00B259');
+				el.find('.dynatree-title').attr('style','background-color:#00B259 !important;');
+				
+				_node=dt.data;
+				oper.act = 'cut';
+				oper.id =dt.data.id;
+				oper.type = Cache.base.dir.types[dt.data.type];
+				
+			},
+			paste: function(tree, dt, el, pos){
+				//比较目标结点类型允许的类型
+				//oper.type 已复制的节点类型
+				if(oper.act=='cut'){
+					var p=dt.data;
+					$.post(App.ctx + '/dir/move.do', {//移动动作
+						id: oper.id,
+						parent : dt.data.id
+					}, function(rs){
+						tree.deleteNode(_node.id);
+						_node.parent = dt.data.key;
+						tree.addNode(_node).activate();
+						updNode(_node); 
+					})
+				}else{
+					$.post(App.ctx + '/dir/' + oper.act + '.do' ,{
+						id: oper.id,
+						parent: dt.data.id
+					},function(rs){
+						tree.loadSubTree(dt); //重新载入这个节点下的子树
+						updNode(dt.data);
+					})
+				}
+			},
+			edit: function(tree, dt, el, pos) {
+				var d = dt.data;
+				switch (d.type) {
+				case C.CORP:
+					App.show({
+						ctx: 'base',
+						action: 'corpEdit',
+						title: '编辑目录',
+						params: d
+					}, updNode, infoPl);
+					break;
+				case C.DEPT:
+					App.show({
+						ctx: 'base',
+						action: 'deptEdit',
+						title: '编辑部门',
+						params: d
+					}, updNode, infoPl);
+					break;
+				case C.DIR:
+					App.show({
+						ctx: 'base',
+						action: 'dirEdit',
+						title: '编辑目录',
+						params: d
+					}, updNode, infoPl);
+					break;
+				case C.PROJ:
+					App.show({
+						ctx: 'base',
+						action: 'projEdit',
+						title: '编辑系统',
+						params: d
+					}, updNode, infoPl);
+					break;
+				case C.APP:
+					App.show({
+						ctx: 'base',
+						action: 'appEdit',
+						title: '编辑应用',
+						params: d
+					}, updNode, infoPl);
+					break;
+				case C.SVC:
+					App.show({
+						ctx: 'soagov',
+						action: 'svcEdit',
+						title: '编辑服务',
+						params: d
+					}, updNode, infoPl);
+					break;
+				case C.COM:
+					App.show({
+						action: 'comEdit',
+						title: '编辑组件',
+						params: d
+					}, updNode, infoPl);
+					break;
+				case C.FACE:
+					App.show({
+						ctx: 'soagov',
+						action: 'faceEdit',
+						title: '编辑接口',
+						params: d
+					}, updNode, infoPl);
+					break;
+				case C.LIB:
+					App.show({
+						ctx: 'base',
+						action: 'libEdit',
+						title: '编辑库',
+						params: d
+					}, updNode, infoPl);
+					break;
+				}
+			},
+			'delete': function(tree, dt, el, pos){
+				var d = dt.data;
+				mac.confirm('确定要删除“' + d.title + '”吗?', function(){
+					$.post(App.ctx + '/dir/delete.do', {
+						id: d.key
+					}, function(dd){
+						var ro = mac.eval(dd);
+						if (ro.success) {
+							tree.deleteNode(d.key);
+							tree.getNode(d.parent).activate();
+						} else {
+							mac.alert(ro.data, ro.params);
+						}
+					});
+				});
+			}
+		},
+		onLoadSubTree: setIcon
+	});
+	if (id) {
+		$.get(App.ctx + '/dir/get2.do', {
+			id: id
+		}, function(rs){
+			var ro = mac.eval(rs), rt = tree.getNode('root');
+			if (ro.success) {
+				tree.expandNode(rt, ro.list);
+				tree.expand2('/root/' + ro.keys.reverse().join('/'), function(p){
+					alert('找不到此路径：' + p);
+				});
+			} else {
+				rt.expand();
+			}
+		});
+	} else {
+		tree.getNode('root').expand();
+	}
+
+	function adjust(){
+		var p = pg.parent(); 
+		tree.height(p.height());
+		infoPl.height(p.height()).width($('#body').width() - tree.width() - 25);
+	}
+	$(window).resize(adjust);
+	adjust();
+	
+// 	$('#backBtn').unbind().click(function(){
+// 		App.go('#');
+// 	}).show();
+});
+</script>
+<div class="tree"></div>
+<div class="infoPl infoContent"></div>
+<ul class="ctxMenu hidden"></ul>

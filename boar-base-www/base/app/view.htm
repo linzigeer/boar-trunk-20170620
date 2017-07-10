@@ -1,0 +1,94 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.base.appView.ui
+		, frm = pg.find('.form');
+
+	function setValues(o) {
+		frm.seek('code').text(o.code);
+		frm.seek('name').text(o.name);
+		frm.seek('path').text(o.sourcePath);
+		frm.seek('memo').text(o.memo);
+		frm.seek('deployCode').text(o.deployCode);
+		frm.seek('compileCode').text(o.compileCode);
+		frm.seek('sourceRoot').text(o.sourceRoot);
+		frm.seek('sourceCode').text(o.sourceCode);
+		frm.seek('exportCode').text(o.exportCode);
+		frm.seek('sourceRoot').text(o.sourceRoot);
+		frm.seek('sourceParent').text(o.sourceParent);
+		frm.seek('libPath').text(o.libPath);
+		frm.seek('port').text(o.port);
+		frm.seek('user').text(o.user);
+		frm.seek('type').text(o.type==0?'普通应用（需要编译、部署）':(o.type==1?'打包配置（只需要导出源码）':'应用配置（需要编译、部署）'));
+		frm.seek('packPath').text(o.packPath);
+		frm.seek('startCode').text(o.startCode);
+		frm.seek('restartCode').text(o.restartCode);
+		frm.seek('shutdownCode').text(o.shutdownCode);
+		frm.seek('version').text(o.version);
+		frm.seek('level').text(o.level);
+	}
+	
+	setValues(pg.params);
+});
+</script>
+<div class="infoPl form">
+	<div class="item">
+		<span class="label">英文名：</span> <span class="value" name="code"></span>
+	</div>
+	<div class="item">
+		<span class="label">中文名：</span> <span class="value" name="name"></span>
+	</div>
+	<div class="item">
+		<span class="label">类型：</span> <span class="value" name="type"></span>
+	</div>
+	<div class="item">
+		<span class="label">导出目录：</span> <span class="value" name="path"></span>
+	</div>
+	<div class="item">
+		<span class="label">描述：</span> <span class="memo" name="memo"></span>
+	</div>
+	<div class="item">
+		<span class="label">打包构建：</span> <span class="value"
+			name="compileCode"></span>
+	</div>
+	<div class="item">
+		<span class="label">包生成路径：</span> <span class="value" name="packPath"></span>
+	</div>
+	<div class="item">
+		<span class="label">部署构建：</span> <span class="value" name="deployCode"></span>
+	</div>
+	<div class="item">
+		<span class="label">导出构建：</span> <span class="value" name="exportCode"></span>
+	</div>
+	<div class="item">
+		<span class="label">源码构建：</span> <span class="value" name="sourceCode"></span>
+	</div>
+	<div class="item">
+		<span class="label">启动构建：</span> <span class="value" name="startCode"></span>
+	</div>
+	<div class="item">
+		<span class="label">重启构建：</span> <span class="value" name="restartCode"></span>
+	</div>
+	<div class="item">
+		<span class="label">停机构建：</span> <span class="value" name="shutdownCode"></span>
+	</div>
+	<div class="item">
+		<span class="label">源码根路径：</span> <span class="value"
+			name="sourceParent"></span>
+	</div>
+	<div class="item">
+		<span class="label">库包路径：</span> <span class="value"
+			name="libPath"></span>
+	</div>
+	<div class="item">
+		<span class="label">版本号：</span> <span class="value" name="version"></span>
+	</div>
+	<div class="item">
+		<span class="label">优先级：</span> <span class="value" name="level"></span>
+	</div>
+	<div class="item">
+		<span class="label">端口：</span> <span class="value" name="port"></span>
+	</div>
+	<div class="item">
+		<span class="label">用户：</span> <span class="value" name="user"></span>
+	</div>
+</div>

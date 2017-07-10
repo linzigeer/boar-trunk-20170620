@@ -1,0 +1,122 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.base.appFileIndex.ui, pm = pg.params
+	, hd = pg.children('.head'), bd = pg.children('.body')
+	, gd = pg.seek('grid') ;
+	
+	//配置文件
+	gd.mac('grid', {
+		cols : [{
+			field: 'code', title : '英文编号', width: 180,
+			render: function(r, tr){
+				r.appId=pm.app.id;
+				return $('<span class="a"></span>').click(function(){
+					App.open({
+						title:'配置文件列表',
+						action:'viewEdit',
+						model: true,
+						params: r
+					},function(){
+						gd.load()
+					});
+				}).append(r.code);
+			}
+		},{
+			field: 'name', title : '文件名称', width: 180
+		},{
+			field: 'sourcePath', title : '源码路径', width: 180
+		},{
+			field: 'deployPath', title : '部署路径', width: 180
+		},{
+			field: 'type', title : '类型', width: 80,
+			render: function(r){
+				if(r.type==0){
+					return $('<span>xml</span>')
+				}else if(r.type==1){
+					return $('<span>properties</span>')
+				}else if(r.type==2){
+					return $('<span>txt</span>')
+				}else if(r.type==3){
+					return $('<span>conf</span>')
+				}else if(r.type==4){
+					return $('<span>sql</span>')
+				}else if(r.type==5){
+					return $('<span>shell</span>')
+				}else if(r.type==6){
+					return $('<span>dir</span>')
+				}else if(r.type==7){
+					return $('<span>其他类型</span>')
+				}
+			}
+		},{
+			field: 'version', title : '版本号', width: 160
+		},{
+			field: 'id', title : '操作', width: 80,
+			render: function(r){
+				return $('<span class="a center">移除</span>').click(function(){
+					$.post(App.ctx + '/appFile/deleteByFileIdAndAppId.do', {
+						fileId: r.id,
+						appId: pm.app.id
+					},function(){
+						gd.load();	
+					});
+				});
+			}
+		}],
+		loader: {
+			url: App.ctx + '/appFile/listFilesByAppId.do',
+			params: {
+				appId: pm.app.id,
+				pageNo: 1, pageSize: 50
+			},
+			autoLoad: true
+		},
+		pagerLength: 10
+	});
+	pg.seek('addSet').click(function(){
+		App.open({
+			title: '关联文件',
+			ctx: 'base',
+			action: 'appFileEdit',
+			model: true,
+			params: { appId: pm.app.id }
+		},function(){
+			gd.load()
+		});
+	});
+	pg.seek('setKey').keydown(function(e) {
+		if (e.keyCode == 13)
+			gd.load({ key : $(this).val() });
+	});
+	pg.seek('setFind').click(function(e){
+		gd.load({ key : $(pg.seek('setKey')).val() });
+	});
+	
+	function adjust(){
+		var h = pg.parent().height();
+		bd.height(h - hd.height() - 48);
+		gd.adjust();
+	}
+	$(window).resize(adjust);
+	adjust();
+	
+});
+</script>
+
+<div class="head">
+		<div class="fl">
+			<button name="addSet">添加关联文件</button>
+			&nbsp;&nbsp;
+		</div>
+		<div class="fl">
+			&nbsp;&nbsp;&nbsp;&nbsp;关键字： <input type="text" name="setKey"
+				class="sevBtn" placeholder="查找" />
+			<button name="setFind">查找</button>
+			&nbsp;&nbsp;&nbsp;&nbsp;
+		</div>
+		<div class="clear"></div>
+</div>
+<div class="clear"></div>
+<div class="body">
+		<div class="grid" name="grid"></div>
+</div>

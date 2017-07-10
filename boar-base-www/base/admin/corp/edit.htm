@@ -1,0 +1,82 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.base.corpEdit.ui;
+	var frm = {
+		code: pg.seek('code'),
+		name: pg.seek('name'),
+		memo: pg.seek('memo')
+	}
+	function getValues(){
+		return {
+			parent:pg.params.parent, 
+			id: pg.params.id,
+			code: frm.code.val(),
+			name: frm.name.val(),
+			memo: frm.memo.val()
+		};
+	}
+	function setValues(o){
+		pg.children('.title').html(o.id? '编辑公司信息':'添加公司');
+		frm.code.val(o.code);
+		frm.name.val(o.name);
+		frm.memo.val(o.memo);
+	}
+	function valid(p){
+		pg.find('.msg').html('');
+		if(!p.code){
+			frm.code.next().html('编号不能为空');
+			return false;
+		}
+		if(!p.name){
+			frm.name.next().html('名称不能为空');
+			return false;
+		}
+// 		if(/\w+(\.\w+)*/.test(p.code)){
+// 			frm.code.next().html('公司名不符合要求');
+//  			return false;
+// 		}
+		return true;
+	}
+	pg.seek('ok').click(function(){
+		var pms = getValues();
+		if(!valid(pms))
+			return;
+		$.post(App.ctx + '/corp/save.do'
+			, pms, function(rs){
+			var ro = mac.eval(rs);
+			if (ro.success) {
+				pg.callback(ro.data);
+			} else {
+				pg.seek('msg').html(mac.msg(ro.data, ro.params));
+			}
+		});
+		return false;
+	});
+	setValues(pg.params || {});
+});
+</script>
+<div class="title" name="title">编辑公司</div>
+<div class="form">
+	<input type="hidden" name="id" />
+	<div class="item">
+		<span class="label">公司英文名</span> <input type="text" name="code" /> <span
+			class="msg">*</span>
+	</div>
+	<div class="item">
+		<span class="label">公司中文名</span> <input type="text" name="name" /> <span
+			class="msg">*</span>
+	</div>
+	<div class="item">
+		<span class="label">备注：</span>
+		<textarea name="memo"></textarea>
+		<span class="msg">*</span>
+	</div>
+	<div class="item">
+		<span class="label">&nbsp;</span>
+		<div name="msg"></div>
+		<div class="clear"></div>
+	</div>
+	<div class="bottom">
+		<button name="ok">保存</button>
+	</div>
+</div>

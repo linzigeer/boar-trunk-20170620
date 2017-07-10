@@ -1,0 +1,150 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.base.libIndex.ui, pm = pg.params
+		, frm = pg.find(".form")
+		, tabs = pg.find('.tabs')
+		, infoPl = pg.find('.infoPl')
+		, pomPl = pg.find('.pomPl')
+		, byMePl = pg.find('.byMePl')
+		, onMePl = pg.find('.onMePl');
+	
+	function init(o){
+		setValues(o);
+		var items=[{
+			code: 'infoPl',title: '基本信息',
+			el: infoPl
+		},{
+			code: 'pomPl',title: 'POM文件',
+			el: pomPl
+		},{
+			code: 'byMePl',title: '依赖项',
+			render: function(p,c){
+				App.show({
+					ctx: 'base',
+					action: 'libByMeIndex',
+					params: { lib: c}
+				},$.noop, p);
+			}
+		},{
+			code: 'onMePl',title: '被依赖项',
+			render: function(p,c){
+				App.show({
+					ctx: 'base',
+					action: 'libOnMeIndex',
+					params: { lib: c}
+				}, $.noop, p);
+			}
+		}];
+		
+		var ctx = App.ctx.substring(1),
+			ex = App[ctx].libIndex;
+		if (ex && ex.tabs) {
+			for (var i=0; i<ex.tabs.length; i++) {
+				items.push(ex.tabs[i]);
+			}
+		}
+		
+		items = $.map(items, function(a){
+			if (a.auth && !App.logon.power(a.auth)) {
+				if (a.el) {
+					a.el.hide();
+				}
+				return null;
+			}
+			return a;
+		});
+		
+		tabs.mac('tabs', {
+			tabWidth: 80,
+			items: items
+		}).selectFirst();
+		
+		function adjust(){
+			var h = pg.parent().height();
+			pg.height(h-30);
+			tabs.height(h-30);
+			tabs.adjust();
+			h = tabs.children('.body').height();
+		}
+		$(window).resize(adjust);
+		adjust();
+	}
+	
+	function setValues(o) {
+		frm.seek('code').text(o.code);
+		frm.seek('name').text(o.name);
+		frm.seek('ver').text(o.ver);
+		frm.seek('type').text(o.type!=0?'war包':'jar包');
+		frm.seek('memo').text(o.memo);
+		frm.seek('level').text(o.level);
+		frm.seek('sourceParent').text(o.sourceParent);
+		frm.seek('sourcePath').text(o.sourcePath);
+		frm.seek('sourceCode').text(o.sourceCode);
+		frm.seek('exportCode').text(o.exportCode);
+		frm.seek('compileCode').text(o.compileCode);
+		frm.seek('packPath').text(o.packPath);
+		frm.seek('startCode').text(o.startCode);
+		frm.seek('restartCode').text(o.restartCode);
+		frm.seek('shutdownCode').text(o.shutdownCode);
+	}
+
+	var w = mac.wait('Loading');
+	$.get(App.ctx + '/lib/get.do', {
+		id: pg.params.id
+	}, function(rs) {
+		var ro = mac.eval(rs);
+		if (ro.success) {
+			init(ro.data);
+		} else {
+			mac.alert(ro.data, ro.params);
+		}
+		w.close();
+	});
+	
+});
+</script>
+<div class="tabs"></div>
+<div class="infoPl form">
+	<div class="item">
+		<span class="label">英文名：</span> <span class="value" name="code"></span>
+	</div>
+	<div class="item">
+		<span class="label">中文名：</span> <span class="value" name="name"></span>
+	</div>
+	<div class="item">
+		<span class="label">类型：</span> <span class="memo" name="type"></span>
+	</div>
+	<div class="item">
+		<span class="label">版本号：</span> <span class="value" name="ver"></span>
+	</div>
+	<div class="item">
+		<span class="label">优先级：</span> <span class="memo" name="level"></span>
+	</div>
+	<div class="item">
+		<span class="label">源码根路径：</span> <span class="memo" name="sourceParent"></span>
+	</div>
+	<div class="item">
+		<span class="label">源码相对路径：</span> <span class="memo" name="sourcePath"></span>
+	</div>
+	<div class="item">
+		<span class="label">源码构建：</span> <span class="memo" name="sourceCode"></span>
+	</div>
+	<div class="item">
+		<span class="label">导出构建：</span> <span class="memo" name="exportCode"></span>
+	</div>
+	<div class="item">
+		<span class="label">打包构建：</span> <span class="memo" name="compileCode"></span>
+	</div>
+	<div class="item">
+		<span class="label">包生成路径：</span> <span class="memo" name="packPath"></span>
+	</div>
+	<div class="item">
+		<span class="label">描述：</span> <span class="memo" name="memo"></span>
+	</div>
+</div>
+
+<pre class="pomPl" style="margin: 0px;"></pre>
+<!-- 依赖项 -->
+<div class="byMePl"></div>
+<!-- 被依赖项 -->
+<div class="onMePl"></div>

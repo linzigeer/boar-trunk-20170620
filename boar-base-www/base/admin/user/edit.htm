@@ -1,0 +1,130 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.base.userEdit.ui;
+	var frm = {
+		id: pg.seek('id'),
+		nick: pg.seek('nick'),
+		name: pg.seek('name'),
+		email: pg.seek('email'),
+		phone: pg.seek('phone'),
+		corpId: pg.seek('corpId'),
+		deptId: pg.seek('deptId'),
+		memo: pg.seek('memo'),
+		status: pg.seek('status')
+	};
+	frm.status.mac('combo', {
+		width: 140,
+		boxWidth: 140,
+		data: Cache.base.user.status
+	});
+	function getValues(){
+		return {
+			id: frm.id.val(),
+			nick: frm.nick.val(),
+			name: frm.name.val(),
+			email: frm.email.val(),
+			phone: frm.phone.val(),
+			corpId: frm.corpId.val(),
+			deptId: frm.deptId.val(),
+			status: frm.status.val(),
+			memo: frm.memo.val()
+		};
+	}
+	function setValues(o){
+		pg.children('.title').html(o.id? '编辑人员信息':'添加人员');
+		frm.id.val(o.id);
+		frm.nick.val(o.nick);
+		frm.name.val(o.name);
+		frm.email.val(o.email);
+		frm.phone.val(o.phone);
+		frm.corpId.val(o.corpId);
+		frm.deptId.val(o.deptId);
+		frm.status.val([o.status]);
+		frm.memo.val(o.memo);
+	}
+	function valid(p){
+		pg.find('.msg').html('');
+		if(!p.nick){
+			frm.nick.next().html('昵称不能为空');
+			return false;
+		}
+		if(!p.name){
+			frm.name.next().html('名称不能为空');
+			return false;
+		}
+// 		if(/\w+(\.\w+)*/.test(p.code)){
+// 			frm.code.next().html('人员名不符合要求');
+//  			return false;
+// 		}
+		return true;
+	}
+	
+	pg.seek('ok').click(function(){
+		var pms = getValues();
+		if(!valid(pms))
+			return;
+		$.post(App.ctx + '/sys/user/save.do'
+			, pms, function(rs){
+			var ro = mac.eval(rs);
+			if (ro.success) {
+				pg.callback(ro.data);
+				pg.close();
+			} else {
+				alert(ro.data+ro.params);
+				pg.seek('msg').html(mac.msg(ro.data, ro.params));
+			}
+		});
+		return false;
+	});
+	setValues(pg.params || {});
+	
+// 	function adjust(){
+// 		var h = pg.parent().height();
+// 		pg.height(h);
+// 		tabs.width(pg.width() - formPl.width() - 24);
+// 		tabs.height(h);
+// 		tabs.adjust();
+// 	}
+// 	$(window).resize(adjust);
+// 	adjust();
+});
+</script>
+<div class="form">
+	<h3 class="title hidden">编辑人员</h3>
+	<input type="hidden" name="id" /> <input type="hidden" name="corpId" />
+	<input type="hidden" name="deptId" />
+	<div class="item">
+		<span class="label">人员昵称</span> <input type="text" name="nick" /> <span
+			class="msg">*</span>
+	</div>
+	<div class="item">
+		<span class="label">人员姓名</span> <input type="text" name="name" /> <span
+			class="msg">*</span>
+	</div>
+	<div class="item">
+		<span class="label">状态：</span>
+		<div class="combo fl" name="status"></div>
+		<span class="msg">*</span>
+	</div>
+	<div class="item">
+		<span class="label">Email</span> <input type="text" name="email" /> <span
+			class="msg">*</span>
+	</div>
+	<div class="item">
+		<span class="label">电话</span> <input type="text" name="phone" /> <span
+			class="msg">*</span>
+	</div>
+	<div class="item">
+		<span class="label">备注：</span>
+		<textarea name="memo"></textarea>
+		<span class="msg">*</span>
+	</div>
+	<div class="item">
+		<span class="label">&nbsp;</span>
+		<div name="msg"></div>
+		<div class="clear"></div>
+	</div>
+	<div class="bottom">
+		<button name="ok">保存</button>
+	</div>
+</div>

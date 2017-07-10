@@ -1,0 +1,195 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.base.serverEdit.ui;
+	var isEdit=false;
+	var frm = {
+		code: pg.seek('code'),
+		catalog: pg.seek('catalog'),
+		name: pg.seek('name'),
+		group: pg.seek('group'),
+		ip: pg.seek('ip'),
+		env: pg.seek('env'),
+		memo: pg.seek('memo')
+	};
+	function getValues(){
+		var pid = pg.params.parent;
+		return {
+			id: pg.params.id,
+			projId: pg.params.projId, 
+			code: frm.code.val(),
+			name: frm.name.val(),
+			type: frm.catalog.val(),
+			group: frm.group.val(),
+			ip: frm.ip.val(),
+			env: Cache.base.inputEnv[frm.env.val()],
+			memo: frm.memo.val(),
+		};
+	}
+	function setValues(o, pom){
+		//pg.seek('title').html(o.id? '编辑服务器':'添加服务器');
+		if(o.id){
+			isEdit=true;
+		}
+		frm.code.val(o.code);
+		frm.name.val(o.name);
+		frm.group.val(o.group);
+		frm.ip.val(o.ip);
+		var envNum;
+		for (var i=0;i<Cache.base.inputEnv.length;i++){
+			if(Cache.base.inputEnv[i]==o.env){
+				envNum=i;
+			}
+		}
+		frm.env.val(envNum);
+		frm.memo.val(o.memo);
+		frm.catalog.val(o.type);
+	}
+	function resetValues(){
+		frm.code.val('');
+		frm.name.val('');
+		frm.group.val('');
+		frm.ip.val('');
+		frm.env.val(0);
+		frm.memo.val('');
+		frm.catalog.val('');
+		alert('添加成功，请继续添加');
+	}
+	function validate(p){
+		pg.find('.msg').html('');
+		var x = App.validate, b;
+		b = x('svc.code', frm.code, p.code) &x('svc.name', frm.name, p.name)&x('svc.ip', frm.ip, p.ip);
+		if (p.pom) {
+			b = b & x('svc.memo', frm.memo, p.memo)& x('svc.group', frm.group, p.group) & x('svc.env', frm.env, p.env);
+		}
+		return b;
+	}
+	 $("input").blur(function(){
+			var pms = getValues();
+			if(!validate(pms))
+				return;
+		});
+	 $("input").focus(function(){
+		 pg.find('.msgColor').hide()
+	 })
+	pg.seek('ok').click(function(){
+		
+		var pms = getValues();
+		if(!validate(pms))
+			return;
+		$.post(App.ctx + '/server/save.do', pms, function(rs){
+			var ro = mac.eval(rs);
+			if (ro.success) {
+				pg.callback();//更新树	
+				//pg.find('.msgColor').show();
+				if(isEdit){
+					pg.close();
+				}else{
+					resetValues();
+				}
+			} else {
+				pg.seek('msg').html(mac.msg(ro.data, ro.params));
+			}
+		});
+		return false;
+	});
+	setValues(pg.params || {});
+	
+	pg.seek('close').click(function(){
+		pg.close()
+	})
+	
+	if (pg.params.id) {
+		var w = mac.wait('Loading');
+		$.get(App.ctx + '/server/get.do', {
+			id: pg.params.id
+		}, function(rs) {
+			var ro = mac.eval(rs);
+			if (ro.success) {
+				
+				setValues(ro.data);
+				//pg.callback(ro.data);//更新树	
+				
+			} else {
+				pg.seek('msg').html(mac.msg(ro.data, ro.params));
+			}
+			w.close();
+		});
+	} else {
+		setValues(pg.params, '');
+	};
+	frm.catalog.mac('combo', {
+		keyField: 'k',
+		displayField: 'v',
+		multiSelect: false,
+		width: 140,
+		boxWidth: 140,
+		cols : [{
+			field: 'v', width: 140
+		}],
+		data: [{ k: '0', v: '应用服务器' }, 
+		       { k: '1', v: '数据库服务器' }, 
+		       { k: '2', v: 'web服务器' }
+		       ]
+	}).val();
+	/* 查找框 */
+	frm.env.mac('combo', {
+		boxLeft:300,
+		width: 70,
+		boxWidth: 70,
+		data: Cache.base.inputEnv
+	}).val('CIT');
+	
+});
+</script>
+<div class="left">
+	<!-- <h3 class="title">Application form</h3> -->
+	<div class="form">
+		<div class="title">
+			<span class="value" name="title"></span>
+		</div>
+		<div class="item">
+			<span class="label">编码：</span> <input type="text" name="code"
+				placeholder="请填入服务器的英文名字" /> <span class="msg">*</span>
+			<div class="clear"></div>
+		</div>
+		<div class="item">
+			<span class="label">名字：</span> <input type="text" name="name"
+				placeholder="请填入服务器的中文名字" /> <span class="msg">*</span>
+			<div class="clear"></div>
+		</div>
+		<div class="item">
+			<span class="label">服务器类型：</span>
+			<div class="combo" name="catalog"></div>
+			<div class="clear"></div>
+		</div>
+		<div class="item">
+			<span class="label">Ip：</span> <input type="text" name="ip"
+				placeholder="请填入服务器的IP地址" /> <span class="msg">*</span>
+			<div class="clear"></div>
+		</div>
+		<div class="item">
+			<span class="label">组别：</span> <input type="text" name="group"
+				placeholder="请填入服务器的组别" />
+			<div class="clear"></div>
+		</div>
+		<div class="item">
+			<span class="label">环境：</span>
+			<div class="combo" name="env"></div>
+			<div class="clear"></div>
+		</div>
+		<div class="item">
+			<span class="label">备忘录：</span>
+			<textarea name="memo" placeholder="请填入服务器的memo"></textarea>
+			<div class="clear"></div>
+		</div>
+		<div class="item">
+			<span class="label msgColor hidden">添加成功，请勿重复添加！</span>
+			<div name="msg"></div>
+			<div class="clear"></div>
+		</div>
+		<div class="bottom buttonTop">
+			<button name="ok" class="addBtn">确定</button>
+			<button name="close" class="addBtn">关闭</button>
+		</div>
+	</div>
+</div>

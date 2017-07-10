@@ -1,0 +1,196 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.base.appInstIndex.ui, pm = pg.params
+		, hd = pg.children('.head'), bd = pg.children('.body')
+		, gd = pg.seek('grid'), envCb = pg.seek('env');
+
+	gd.mac('grid', {
+		cols : [{
+			field: 'id', title: '<input type="checkbox" name="all" />', width: 24,
+			render : function(r, tr, gd) {
+				return '<input type="checkbox" name="keys" value="' + r.id + '"/>';
+			}
+		}, {
+			field: 'code', title: '服务器编号', width: 180,
+			render: function(r) {
+				return r.server.code;
+			}
+		},{
+			field: 'name', title: '服务器名称', width: 200,
+			render: function(r) {
+				return r.server.name;
+			}
+		},{
+			field: 'ip', title: 'IP', width: 120,
+			render: function(r) {
+				return r.server.ip;
+			}
+		},{
+			field: 'port', title: '端口', width: 80
+		},{
+			field: 'user', title: '用户', width: 120
+		},{
+			field: 'env', title: '环境', width: 80,
+			render: function(r) {
+				return r.server.env;
+			}
+		},{
+			field: 'status', title: '状态', width: 80,
+			render: function(r){
+				return Cache.base.app.inst.status[r.status]
+			}
+		},{
+			field: 'opt', title: '操作', width: 120,
+			render: function(r, tr, gd) {
+				var p = $('<div></div>');
+				if (r.status == 0) {
+					$('<span class="a"></span>').click(function(){
+						App.open({
+							title: '编辑应用实例',
+							ctx: 'base',
+							action: 'appInstEdit',
+							params: $.extend(r, { projId: pm.projId })
+						}, function(s){
+							gd.load();
+						});
+					}).append('编辑').appendTo(p);
+					p.append('&nbsp;');
+					//
+					if (App.logon.power('app.inst.start')) {
+						$('<span class="a"></span>').click(function(){
+							//todo
+						}).append('启动').appendTo(p);
+						p.append('&nbsp;');
+					}
+				} else if (r.status == 1) {
+					if(App.logon.power('app.inst.stop')){
+						$('<span class="a"></span>').click(function(){
+							//todo
+						}).append('停止').appendTo(p);
+						p.append('&nbsp;');
+					}
+				}
+				$('<span class="a"></span>').click(function(){
+					$.post(App.ctx + '/app/inst/delete.do', {
+						id: r.id
+					}, function(){
+						gd.load();
+					});
+				}).append('移除').appendTo(p);
+				return p;
+			}
+		}],
+		loader: {
+			url: App.ctx + '/app/inst/list.do',
+			params: {
+				pageNo: 1, pageSize: 50,
+				appId: pm.app.id, env: 'ALL'
+			},
+			autoLoad: false
+		},
+		pagerLength: 50
+	});
+	
+	pg.seek('all').click(function(){
+		gd.seek('keys').prop('checked', $(this).prop('checked'));
+	});
+	
+	if (App.logon.power('app.inst.deploy')) {
+		//
+		hd.seek('add1').click(function(){
+			App.open({
+				title: '编辑应用实例',
+				ctx: 'base',
+				action: 'appInstEdit',
+				params: pm
+			}, function(s){
+				gd.load();
+			});
+		}).show();
+		//
+		hd.seek('addN').click(function(){
+			App.open({
+				title: '批量添加部署节点',
+				ctx: 'base',
+				action: 'serverPicker',
+				model: true,
+				params: {
+					env: envCb.val(),
+					multi: 1
+				}
+			}, function(s){
+				if (!s || !s.length){
+					return;
+				}
+				$.post(App.ctx + '/app/inst/add.do' ,{
+					appId: pm.app.id,
+					serverIds:
+						$.map(s, function(n){
+							return n.id;
+						}).join(',')
+				}, function(rs){
+					gd.load();
+				});
+			});
+		}).show();
+	}
+	//
+	if (App.logon.power('app.inst.undeploy')) {
+		hd.seek('remove').click(function(){
+// 			$.post(App.ctx + '/app/inst/delete.do' ,{
+// 				id: pg.params.id,
+// 			}, function(rs){
+// 				gd.load();
+// 			});
+		}).show();
+	}
+
+	envCb.mac('combo', {
+		width: 80,
+		boxTop: 34,
+		boxWidth: 81,
+		readOnly: 1,
+		data: Cache.base.env,
+		onSelect: function(me, sk, sd){
+			gd.load({ env: envCb.data[sk[0]] });
+		}
+	}).val(0);
+	
+	pg.seek('key').keydown(function(e) {
+		if (e.keyCode == 13){
+			gd.load({ key : $(this).val() });
+		}
+	});
+	pg.seek("find").click(function(e){
+		gd.load({ key : pg.seek('key').val() });
+	});
+	
+	function adjust(){
+		var h = pg.parent().height();
+		bd.height(h - hd.height() - 48);
+		gd.adjust();
+	}
+	$(window).resize(adjust);
+	adjust();
+});
+</script>
+<div class="head">
+	<div class="fl">
+		<button class="hidden" name="add1">添加部署节点</button>
+		<button class="hidden" name="addN">批量添加部署节点</button>
+		<button class="hidden" name="remove">批量移除</button>
+	</div>
+	<div class="fl">
+		<span class="fl">环境切换：</span>
+		<div class="combo fl" name="env" style="margin-top: 3px;"></div>
+	</div>
+	<div class="fl">
+		&nbsp;&nbsp;&nbsp;&nbsp;关键字： <input type="text" name="key" />
+		<button name="find">查找</button>
+	</div>
+	<div class="clear"></div>
+</div>
+<div class="clear"></div>
+<div class="body">
+	<div class="grid" name="grid"></div>
+</div>

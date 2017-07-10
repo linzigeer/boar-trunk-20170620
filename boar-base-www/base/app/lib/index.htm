@@ -1,0 +1,127 @@
+<script type="text/javascript">
+$(function(){
+	var pg = App.base.appLibIndex.ui, pm = pg.params
+		, hd = pg.children('.head'), bd = pg.children('.body')
+		, gd = pg.seek('grid');
+
+	gd.mac('grid', {
+		cols : [{
+			field: 'code', title : '库编号', width: 200,
+			render: function(r){
+				return r.lib.code;
+			}
+		},{
+			field: 'name', title : '库名称', width: 240,
+			render: function(r){
+				return r.lib.name;
+			}
+		},{
+			field: 'ver', title : '库版本', width: 180,
+			render: function(r){
+				return r.lib.ver;
+			}
+		},{
+			field: 'libPath', title : '应用的库包位置', width: 240
+		},{
+			field: 'id', title : '操作', width: 120,
+			render: function(r){
+				var p = $('<div></div>');
+				if(App.logon.power('lib.delete')){
+					$('<span class="a"></span>').click(function(){
+						$.post(App.ctx + '/app/lib/remove.do', {
+							id: r.id
+						},function(){
+							gd.load();
+						});
+					}).append('删除').appendTo(p);
+					p.append('&nbsp;&nbsp;&nbsp;');
+				}
+				if (App.logon.power('appLib.update')){
+					$('<span class="a"></span>').click(function(){
+						var a = prompt("请输入应用的库包路径", r.libPath);
+						$.post(App.ctx + '/app/lib/update.do', {
+							id: r.id,
+							libPath: a
+						}, function(rs){
+							gd.load();
+						});
+					}).append('修改').appendTo(p);
+				}
+				return p;
+			}
+		}],
+		loader: {
+			url: App.ctx + '/app/lib/list.do',
+			params: {
+				pageNo: 1, pageSize: 50,
+				id: pm.app.id
+			},
+			autoLoad: true
+		},
+		pagerLength: 10
+	});
+	
+	hd.seek('depend').click(function(){	
+		App.open({
+			title:'Libary Name',
+			action:'appLibPicker',
+			model:true,
+			params: { id:pm.app.id, multi: 1  }
+		},function(s){
+			if (!s || !s.length){
+				return;
+			}
+			var a = $.map(s,function(n){
+				return n.id;
+			});
+		var ss = s.length,c=[];
+		for(var i = 0;i<ss;i++){
+			dd=s[""+i+""].id;
+			c.push(dd)
+		};
+			$.post(App.ctx + '/app/lib/save.do', {
+				appIds: pm.app.id,
+				libIds: c.join(',')
+			},function(){
+			hd.load();
+			gd.load();
+			
+			});
+		});
+	});
+	
+	pg.seek('libKey').keydown(function(e) {
+		if (e.keyCode == 13){
+			gd.load({ key : $(this).val() });
+		}
+	});
+	pg.seek('find').click(function(e){
+		gd.load({ key : $(pg.seek('libKey')).val() });
+	});
+	
+	function adjust(){
+		var h = pg.parent().height();
+		bd.height(h - hd.height() - 48);
+		gd.adjust();
+	}
+	$(window).resize(adjust);
+	adjust();
+	
+});
+
+</script>
+
+<div class="head">
+	<div class="fl">
+		当前应用依赖以下库&nbsp;&nbsp;&nbsp;&nbsp;
+		关键字：
+		<input name="libKey" />
+		<button name="find">查找</button>
+		&nbsp;&nbsp;&nbsp;&nbsp;<button name="depend">添加</button>
+	</div>
+	<div class="clear"></div>
+</div>
+<div class="clear"></div>
+<div class="body">
+	<div class="grid" name="grid"></div>
+</div>
